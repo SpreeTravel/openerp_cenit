@@ -19,6 +19,4 @@
 #
 ##############################################################################
 
-import client
-import serializers
-import handler
+import product_handler
