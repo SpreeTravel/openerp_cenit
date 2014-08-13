@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+  <data>
+
+	<menuitem id="wombat" sequence="1" parent="base_setup.view_general_configuration" name="wombat" />
+	
+	<!-- Group -->
+	
+	<record id="wombat_client_view_tree" model="ir.ui.view">
+        <field name="name">wombat.client.view.tree</field>
+        <field name="model">wombat.client</field>
+        <field name="arch" type="xml">
+            <tree string="Clients" >
+            	<field name="url"/>
+                <field name="store"/>
+				<field name="token"/>
+            </tree>
+        </field>
+    </record>
+	
+	<record id="wombat_client_view_form" model="ir.ui.view">
+        <field name="name">wombat.client.view.form</field>
+        <field name="model">wombat.client</field>
+        <field name="arch" type="xml">
+            <form string="Client" version="7.0">
+            	<sheet>
+					<group>
+						<field name="url"/>
+						<field name="store"/>
+						<field name="token"/>
+					</group>
+					<group>
+						<button name="push" type="object" string="Push" />
+						<field name="push_object_ids" nolabel="1" >
+							<tree string="Push objects" editable="bottom">
+								<field name="root" />
+								<field name="model_id" />
+							</tree>
+						</field>
+					</group>
+				</sheet>
+            </form>
+        </field>
+    </record>
+    
+    <record id="wombat_client_action" model="ir.actions.act_window">
+        <field name="name">Clients</field>
+        <field name="res_model">wombat.client</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="wombat_client_view_tree"/>
+    </record>
+	
+	<menuitem id="wombat_client_menu" sequence="1" parent="wombat" action="wombat_client_action"/>
+
+  </data>
+</openerp>
