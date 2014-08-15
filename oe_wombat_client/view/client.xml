@@ -2,7 +2,7 @@
 <openerp>
   <data>
 
-	<menuitem id="wombat" sequence="1" parent="base_setup.view_general_configuration" name="wombat" />
+	<menuitem id="wombat" sequence="1" parent="base.menu_custom" name="Wombat" />
 	
 	<!-- Group -->
 	
@@ -14,6 +14,7 @@
             	<field name="url"/>
                 <field name="store"/>
 				<field name="token"/>
+				<button name="push" type="object" string="Push" icon="gtk-go-forward"/>
             </tree>
         </field>
     </record>
@@ -24,19 +25,20 @@
         <field name="arch" type="xml">
             <form string="Client" version="7.0">
             	<sheet>
-					<group>
-						<field name="url"/>
-						<field name="store"/>
-						<field name="token"/>
-					</group>
-					<group>
-						<button name="push" type="object" string="Push" />
-						<field name="push_object_ids" nolabel="1" >
-							<tree string="Push objects" editable="bottom">
-								<field name="root" />
-								<field name="model_id" />
-							</tree>
-						</field>
+            		<group>
+						<group>
+							<field name="url"/>
+							<field name="store"/>
+							<field name="token"/>
+						</group>
+						<group>
+							<field name="push_object_ids" nolabel="1" >
+								<tree string="Push objects" editable="bottom">
+									<field name="root" />
+									<field name="model_id" />
+								</tree>
+							</field>
+						</group>
 					</group>
 				</sheet>
             </form>

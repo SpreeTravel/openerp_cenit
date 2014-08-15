@@ -26,7 +26,7 @@
     'website': 'http://www.openjaf.com',
     'category': 'Integration',
     'description': """
-        OpenERP Wombat Model.
+        OpenERP Wombat Client
     """,
     'depends': ['sale'],
     'update_xml': [
