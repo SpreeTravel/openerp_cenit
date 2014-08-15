@@ -1,12 +1,22 @@
 # -*- coding: utf-8 -*-
 
-from openerp.addons.web import http
-from openerp.addons.web.http import request
+from openerp import http
+from openerp.http import request
 
 
-class consumer(http.Controller):
+class WebhookController(http.Controller):
 
-    @http.route('/wombat/add_product', type="http", auth="none")
-    def add_product(self, **kwargs):
-        params = str(request.params)
-        return "<h1>This is a test" + params + "</h1>"
+    @http.route('/wombat/<string:path>', type="json", auth="none")
+    def consume(self, path, **kwargs):
+        res = False
+        db = request.httprequest.headers.environ['HTTP_X_HUB_STORE']
+        pwd = request.httprequest.headers.environ['HTTP_X_HUB_TOKEN']
+        if db in http.db_list():
+            request.session.authenticate(db, 'admin', pwd)
+            action, obj = path.split('_')
+            model = request.registry.models.get(obj + '.handler', False)
+            if model:
+                res = getattr(model, action)(request.cr, request.uid,
+                                             request.jsonrequest[obj],
+                                             request.context)
+        return res and True or res

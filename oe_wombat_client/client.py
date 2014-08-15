@@ -39,12 +39,12 @@ class wombat_client(Model):
         res = []
         obj = self.browse(cr, uid, ids[0], context)
         for po in obj.push_object_ids:
-            mo = self.pool.get(po.model)
+            mo = self.pool.get(po.model_id.model)
             model_ids = mo.search(cr, uid, [], context=context)
             try:
                 models = [mo.serialize(x) for x in mo.browse(cr, uid, model_ids, context)]
             except:
-                raise osv.except_osv('Configuration Error!', 'You need serializer for ' + mo.model + 'model.')
+                raise osv.except_osv('Configuration Error!', 'You need serializer for ' + po.model_id.name + ' model.')
 
             payload = simplejson.dumps({po.root: models})
             headers = {
