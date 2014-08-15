@@ -6,11 +6,13 @@ from openerp.http import request
 
 class WebhookController(http.Controller):
 
-    @http.route('/wombat/<string:db>/<string:path>', type="json", auth="none")
-    def consume(self, db, path, **kwargs):
+    @http.route('/wombat/<string:path>', type="json", auth="none")
+    def consume(self, path, **kwargs):
         res = False
+        db = request.httprequest.headers.environ['HTTP_X_HUB_STORE']
+        pwd = request.httprequest.headers.environ['HTTP_X_HUB_TOKEN']
         if db in http.db_list():
-            request.session.authenticate(db, 'admin', 'admin')
+            request.session.authenticate(db, 'admin', pwd)
             action, obj = path.split('_')
             model = request.registry.models.get(obj + '.handler', False)
             if model:
