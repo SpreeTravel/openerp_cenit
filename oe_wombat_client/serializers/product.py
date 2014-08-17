@@ -21,6 +21,8 @@
 
 from openerp.osv.orm import Model
 
+TAXON_FIELDS = ['categ_id', 'public_categ_id']
+
 
 class product_serializer(Model):
     _name = 'product.product'
@@ -33,8 +35,10 @@ class product_serializer(Model):
             'sku': product.default_code,
             'price': product.list_price,
             'cost_price': product.standard_price,
-            'available_on': '2014-01-29T14:01:28.000Z',
-            'shipping_category': 'Default'
+            'available_on': '2014-01-01T14:01:28.000Z',
+            'shipping_category': 'Default',
+            'taxons': self._get_categories(product),
+            'variants': self._get_variants(product)
         }
         return vals
 
@@ -42,3 +46,26 @@ class product_serializer(Model):
         if product.default_code:
             return product.default_code
         return product.name.replace(' ', '-')
+
+    def _get_categories(self, product):
+        taxons = []
+        for field in TAXON_FIELDS:
+            current = getattr(product, field)
+            taxon_parents = [current.name]
+            while (current.parent_id):
+                taxon_parents.append(current.parent_id.name)
+                current = current.parent_id
+            taxon_parents.reverse()
+            taxons.append(taxon_parents)
+        return taxons
+
+    def _get_variants(self, product):
+        variants = []
+        for variant in product.product_variant_ids:
+            var = {}
+            var['sku'] = variant.code
+            var['price'] = variant.lst_price
+            var['cost_price'] = variant.price
+            var['quantity'] = variant.qty_available
+            variants.append(var)
+        return variants

@@ -32,7 +32,8 @@ class wombat_client(Model):
         'url': fields.char('URL', size=255),
         'store': fields.char('Store', size=64),
         'token': fields.char('Token', size=64),
-        'push_object_ids': fields.one2many('wombat.push.object', 'client_id', 'Models')
+        'push_object_ids': fields.one2many('wombat.push.object', 'client_id',
+                                           'Models')
     }
 
     def push(self, cr, uid, ids, context=None):
@@ -42,10 +43,13 @@ class wombat_client(Model):
             mo = self.pool.get(po.model_id.model)
             model_ids = mo.search(cr, uid, [], context=context)
             try:
-                models = [mo.serialize(x) for x in mo.browse(cr, uid, model_ids, context)]
+                models = [mo.serialize(x) for x in mo.browse(cr, uid,
+                                                             model_ids,
+                                                             context)]
             except:
-                raise osv.except_osv('Configuration Error!', 'You need serializer for ' + po.model_id.name + ' model.')
-
+                raise osv.except_osv('Configuration Error!',
+                                     'You must check your serializer for ' \
+                                     + po.model_id.name + ' model.')
             payload = simplejson.dumps({po.root: models})
             headers = {
                 'Content-Type': 'application/json',
