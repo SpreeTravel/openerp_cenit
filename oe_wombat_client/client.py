@@ -22,7 +22,7 @@
 import requests
 import simplejson
 
-from openerp.osv import osv, fields
+from openerp.osv import fields
 from openerp.osv.orm import Model
 
 
@@ -40,24 +40,20 @@ class wombat_client(Model):
         res = []
         obj = self.browse(cr, uid, ids[0], context)
         for po in obj.push_object_ids:
-            mo = self.pool.get(po.model_id.model)
-            model_ids = mo.search(cr, uid, [], context=context)
-            try:
+            mo = self.pool.get(po.model_id.model, False)
+            if mo:
+                model_ids = mo.search(cr, uid, [], context=context)
                 models = [mo.serialize(x) for x in mo.browse(cr, uid,
                                                              model_ids,
                                                              context)]
-            except:
-                raise osv.except_osv('Configuration Error!',
-                                     'You must check your serializer for ' \
-                                     + po.model_id.name + ' model.')
-            payload = simplejson.dumps({po.root: models})
-            headers = {
-                'Content-Type': 'application/json',
-                'X-Hub-Store': obj.store,
-                'X-Hub-Access-Token': obj.token
-            }
-            r = requests.post(obj.url, data=payload, headers=headers)
-            res.append(r.status_code)
+                payload = simplejson.dumps({po.root: models})
+                headers = {
+                    'Content-Type': 'application/json',
+                    'X-Hub-Store': obj.store,
+                    'X-Hub-Access-Token': obj.token
+                }
+                r = requests.post(obj.url, data=payload, headers=headers)
+                res.append(r.status_code)
         return res
 
 
