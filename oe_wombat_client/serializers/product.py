@@ -21,8 +21,6 @@
 
 from openerp.osv.orm import Model
 
-TAXON_FIELDS = ['categ_id', 'public_categ_id']
-
 
 class product_serializer(Model):
     _name = 'product.product'
@@ -30,7 +28,7 @@ class product_serializer(Model):
 
     def serialize(self, product, context=None):
         vals = {
-            'id': self._get_id(product),
+            'id': product.default_code,
             'name': product.name,
             'sku': product.default_code,
             'price': product.list_price,
@@ -42,28 +40,20 @@ class product_serializer(Model):
         }
         return vals
 
-    def _get_id(self, product):
-        if product.default_code:
-            return product.default_code
-        return product.name.replace(' ', '-')
-
     def _get_categories(self, product):
-        taxons = []
-        for field in TAXON_FIELDS:
-            current = getattr(product, field)
-            taxon_parents = [current.name]
-            while (current.parent_id):
-                taxon_parents.append(current.parent_id.name)
-                current = current.parent_id
-            taxon_parents.reverse()
-            taxons.append(taxon_parents)
-        return taxons
+        current = product.categ_id
+        taxons = [current.name]
+        while (current.parent_id):
+            taxons.append(current.parent_id.name)
+            current = current.parent_id
+        taxons.reverse()
+        return [taxons]
 
     def _get_variants(self, product):
         variants = []
         for variant in product.product_variant_ids:
             var = {}
-            var['sku'] = variant.code
+            var['sku'] = variant.default_code
             var['price'] = variant.lst_price
             var['cost_price'] = variant.price
             var['quantity'] = variant.qty_available
