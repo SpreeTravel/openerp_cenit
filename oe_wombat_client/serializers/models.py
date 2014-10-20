@@ -16,21 +16,35 @@ class product(Model):
 
     def serialize(self, product, context=None):     
         vals = {k: getattr(product, v) for k, v in MATCHING.get('product').items()}
+        vals.update({'available_on': '2014-01-29T14:01:28.000Z','shipping_category': 'Default'})
         return vals
+   
+    def _set_product_id(self, cr, uid, id, name, value, args, context=None):
+        return;
+        
+    def _get_product_id(self, cr, uid, ids, name, args, context=None):
+        result = dict.fromkeys(ids, False)
+        for obj in self.browse(cr, uid, ids, context=context):
+            id = obj.name.replace(' ', '-')
+            if obj.default_code:
+                id = obj.default_code
+            result[obj.id] = id
+        return result
     
-    def _set_taxons(self, cr, uid, taxons, context=None):
-        if not taxons:
+    def _set_taxons(self, cr, uid, id, name, value, args, context=None):
+        if not value:
             return False
         pc = self.pool.get('product.category')
         current_tx = False
-        for tx in taxons[0]:
+        for tx in value[0]:
             categ_id = pc.search(cr, uid, [('name', '=', tx)], context=context)
             if categ_id:
                 current_tx = categ_id[0]
             else:
                 vals = {'name': tx, 'parent_id': current_tx}
                 current_tx = pc.create(cr, uid, vals, context)
-        self.categ_id = current_tx
+        product = self.browse(cr, uid, id, context=context)
+        product.categ_id = current_tx
     
     def _get_taxons(self, cr, uid, ids, name, args, context=None):
         result = dict.fromkeys(ids, False)
@@ -45,7 +59,7 @@ class product(Model):
         return result
 
     # TODO: find how to set prices in variants
-    def _set_variants(self, cr, uid, variants, context):
+    def _set_variants(self, cr, uid, id, name, value, args, context=None):
         res = []
         for var in variants:
             vals = {
@@ -76,7 +90,7 @@ class product(Model):
             result[obj.id] = variants
         return result
     
-    def _set_options(self, cr, uid, taxons, context=None):
+    def _set_options(self, cr, uid, id, name, value, args, context=None):
         return;
         
     def _get_options(self, cr, uid, ids, name, args, context=None):
@@ -90,7 +104,7 @@ class product(Model):
             result[obj.id] = attributes
         return result
     
-    def _set_properties(self, cr, uid, taxons, context=None):
+    def _set_properties(self, cr, uid, id, name, value, args, context=None):
         return;
         
     def _get_properties(self, cr, uid, ids, name, args, context=None):
@@ -109,4 +123,5 @@ class product(Model):
         'variants': fields.function(_get_variants, method=True, type='char', fnct_inv=_set_taxons),
         'options': fields.function(_get_options, method=True, type='char', fnct_inv=_set_options),
         'properties': fields.function(_get_properties, method=True, type='char', fnct_inv=_set_properties),
+        'product_id': fields.function(_get_product_id, method=True, type='char', fnct_inv=_set_product_id),
     }
