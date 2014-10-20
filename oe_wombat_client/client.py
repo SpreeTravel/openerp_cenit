@@ -19,11 +19,11 @@
 #
 ##############################################################################
 
-import requests
-import simplejson
-
 from openerp.osv import fields
 from openerp.osv.orm import Model
+import requests
+import simplejson
+from serializers import models
 
 
 class wombat_client(Model):
@@ -35,7 +35,7 @@ class wombat_client(Model):
         'push_object_ids': fields.one2many('wombat.push.object', 'client_id',
                                            'Models')
     }
-
+    
     def push(self, cr, uid, ids, context=None):
         res = []
         obj = self.browse(cr, uid, ids[0], context)

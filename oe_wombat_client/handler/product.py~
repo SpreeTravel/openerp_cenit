@@ -14,6 +14,45 @@ PRODUCT = {
 }
 
 
+class product(Model):
+    _inherit = 'product.product'
+    
+    def set_taxons(self, cr, uid, taxons, context=None):
+        if not taxons:
+            return False
+        pc = self.pool.get('product.category')
+        current_tx = False
+        for tx in taxons[0]:
+            categ_id = pc.search(cr, uid, [('name', '=', tx)], context=context)
+            if categ_id:
+                current_tx = categ_id[0]
+            else:
+                vals = {'name': tx, 'parent_id': current_tx}
+                current_tx = pc.create(cr, uid, vals, context)
+        return current_tx
+    
+    def _get_taxons(self, cr, uid, taxons, context=None):
+        if not taxons:
+            return False
+        pc = self.pool.get('product.category')
+        current_tx = False
+        for tx in taxons[0]:
+            categ_id = pc.search(cr, uid, [('name', '=', tx)], context=context)
+            if categ_id:
+                current_tx = categ_id[0]
+            else:
+                vals = {'name': tx, 'parent_id': current_tx}
+                current_tx = pc.create(cr, uid, vals, context)
+        return current_tx
+
+    _columns = {
+        'taxons': fields.function(_get_taxons, method=True, type='char',
+                                  size=255, fnct_inv=_set_taxons)
+    } 
+    
+    
+
+
 class product_handler(TransientModel):
     _name = 'product.handler'
     _related_model = 'product.product'
@@ -51,7 +90,7 @@ class product_handler(TransientModel):
 
     # TODO: it process just the first one list
     # where do we have to insert the others this?
-    def process_taxons(self, cr, uid, taxons, context=None):
+    def process_	taxons(self, cr, uid, taxons, context=None):
         if not taxons:
             return False
         pc = self.pool.get('product.category')
