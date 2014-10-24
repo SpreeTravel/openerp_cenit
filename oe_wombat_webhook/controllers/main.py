@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+        # -*- coding: utf-8 -*-
 
 from openerp import http
 from openerp.http import request
@@ -16,7 +16,6 @@ class WebhookController(http.Controller):
             action, obj = path.split('_')
             model = request.registry.models.get('handler', False)
             if model:
-                # TODO: Ver si tengo que mandar el nombre del modelo a los metodos.
                 res = getattr(model, action)(request.cr, request.uid,
                                              request.jsonrequest[obj],
                                              request.context)

@@ -4,14 +4,13 @@ Created on 15/10/2014
 
 @author: José Andrés Hernández Bustio
 '''
-from openerp.osv.orm import TransientModel
-from matching.matching import MATCHING
+from openerp.osv.orm import Model
+from openerp.addons.oe_wombat_client.matching.matching import MATCHING
 
-# TODO: Poner de forma generica los metodos, ya que esta especifico para product
-# Ver como puede leer el fichero donde esta el matching
-class handler(TransientModel):
+class handler(Model):
     _name = 'handler'
-        
+    
+    
     def find(self, cr, uid, params,m_name,context=None):
         if params.get('sku', False):
             p_ids = self.pool.get(m_name).search(cr, uid,

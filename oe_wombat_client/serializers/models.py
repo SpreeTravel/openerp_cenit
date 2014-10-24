@@ -8,19 +8,25 @@ Created on 15/10/2014
 from openerp.osv import fields
 from openerp.osv.orm import Model
 
-from matching.matching import MATCHING
+from openerp.addons.oe_wombat_client.matching.matching import MATCHING
 
 class product(Model):
     _name = 'product.template'
     _inherit = 'product.template'
 
-    def serialize(self, product, context=None):     
-        vals = {k: getattr(product, v) for k, v in MATCHING.get('product').items()}
+    def serialize(self, product, context=None):  
+        vals = {}   
+        for k, v in MATCHING.get('product').items():
+            if 'eval' in v:
+                vals[k] = eval( getattr(product, v[0]))
+            else:
+                vals[k] = getattr(product, v[0])
         vals.update({'available_on': '2014-01-29T14:01:28.000Z','shipping_category': 'Default'})
         return vals
    
     def _set_product_id(self, cr, uid, id, name, value, args, context=None):
-        return;
+        product = self.browse(cr, uid, id, context=context)
+        product.write({'default_code': value}, context=context)
         
     def _get_product_id(self, cr, uid, ids, name, args, context=None):
         result = dict.fromkeys(ids, False)
@@ -36,7 +42,7 @@ class product(Model):
             return False
         pc = self.pool.get('product.category')
         current_tx = False
-        for tx in value[0]:
+        for tx in value:
             categ_id = pc.search(cr, uid, [('name', '=', tx)], context=context)
             if categ_id:
                 current_tx = categ_id[0]
@@ -44,7 +50,7 @@ class product(Model):
                 vals = {'name': tx, 'parent_id': current_tx}
                 current_tx = pc.create(cr, uid, vals, context)
         product = self.browse(cr, uid, id, context=context)
-        product.categ_id = current_tx
+        product.write({'categ_id': current_tx}, context=context)
     
     def _get_taxons(self, cr, uid, ids, name, args, context=None):
         result = dict.fromkeys(ids, False)
@@ -58,8 +64,7 @@ class product(Model):
             result[obj.id] = taxons
         return result
 
-    # TODO: find how to set prices in variants
-    def _set_variants(self, cr, uid, id, name, value, args, context=None):
+    def _set_variants(self, cr, uid, id, name, value, args, context=None):   
         res = []
         for var in variants:
             vals = {
@@ -91,7 +96,7 @@ class product(Model):
         return result
     
     def _set_options(self, cr, uid, id, name, value, args, context=None):
-        return;
+        pass
         
     def _get_options(self, cr, uid, ids, name, args, context=None):
         result = dict.fromkeys(ids, False)
@@ -105,7 +110,7 @@ class product(Model):
         return result
     
     def _set_properties(self, cr, uid, id, name, value, args, context=None):
-        return;
+        pass
         
     def _get_properties(self, cr, uid, ids, name, args, context=None):
         result = dict.fromkeys(ids, False)

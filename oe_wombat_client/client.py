@@ -25,7 +25,6 @@ import requests
 import simplejson
 from serializers import models
 
-
 class wombat_client(Model):
     _name = 'wombat.client'
     _columns = {
@@ -55,7 +54,6 @@ class wombat_client(Model):
                 r = requests.post(obj.url, data=payload, headers=headers)
                 res.append(r.status_code)
         return res
-
 
 class wombat_push_object(Model):
     _name = 'wombat.push.object'
