@@ -30,7 +30,8 @@
     """,
     'depends': ['sale_stock'],
     'update_xml': [
-        'view/client.xml'
+        'view/client.xml',
+        'view/data_type.xml'
     ],
     'installable': True
 }

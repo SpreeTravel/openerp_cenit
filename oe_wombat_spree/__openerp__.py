@@ -19,8 +19,15 @@
 #
 ##############################################################################
 
-import matching
-import client
-import data_type
-import handler
-import serializer
+{
+    'name': 'OpenERP Wombat Spree',
+    'version': '0.1',
+    'author': 'OpenJAF',
+    'website': 'http://www.openjaf.com',
+    'category': 'Integration',
+    'description': """
+        OpenERP Wombat Spree
+    """,
+    'depends': ['oe_wombat_client'],
+    'installable': True
+}

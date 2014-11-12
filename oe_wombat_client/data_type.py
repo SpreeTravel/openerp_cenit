@@ -19,8 +19,27 @@
 #
 ##############################################################################
 
-import matching
-import client
-import data_type
-import handler
-import serializer
+from openerp import models, fields
+
+
+class WombatDataType(models.Model):
+    _name = 'wombat.data.type'
+
+    name = fields.Char('Name', size=128)
+    model_id = fields.Many2one('ir.model', 'Model')
+    line_ids = fields.One2many('wombat.data.type.line', 'data_type_id',
+                               'Lines')
+
+
+class WombatDataTypeLine(models.Model):
+    _name = 'wombat.data.type.line'
+
+    data_type_id = fields.Many2one('wombat.data.type', 'Data Type')
+    name = fields.Char('Name')
+    line_type = fields.Selection([('field', 'Field'), ('function', 'Function'),
+                                  ('model', 'Model'), ('default', 'Default')],
+                                 'Type')
+    line_cardinality = fields.Selection([('2many', '2many'), ('2one', '2one')],
+                                        'Cardinality')
+    value = fields.Char('Value')
+    primary = fields.Boolean('Primary')
