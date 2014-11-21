@@ -1,38 +1,53 @@
 # -*- coding: utf-8 -*-
-'''
-Created on 15/10/2014
 
-@author: José Andrés Hernández Bustio
-'''
-from openerp.osv.orm import Model
-from openerp.addons.oe_wombat_client.matching.matching import MATCHING
+from openerp import models
 
-class handler(Model):
-    _name = 'handler'
-    
-    
-    def find(self, cr, uid, params,m_name,context=None):
-        if params.get('sku', False):
-            p_ids = self.pool.get(m_name).search(cr, uid,
-                                   [('default_code', '=', params['sku'])],
-                                   context=context)
-            return p_ids
-        return []
 
-    def add(self, cr, uid, params,m_name, context=None):
+class WombatHandler(models.TransientModel):
+    _name = 'wombat.handler'
+
+    def find(self, cr, uid, match, model_obj, params, context=None):
+        if params.get(match.field_id, False):
+            to_search = [(match.field_id, '=', params[match.field_id])]
+            obj_ids = model_obj.search(cr, uid, to_search, context=context)
+            if obj_ids:
+                return obj_ids[0]
+        return False
+
+    def add(self, cr, uid, params, m_name, context=None):
         res = False
-        pp = self.pool.get(m_name)
-        p_ids = self.find(cr, uid, params, context)
-        if not p_ids:
-            vals = {v: params[k] for k, v in MATCHING.get(m_name).items()}
-            res = pp.create(cr, uid, vals, context)
+        wdt = self.pool.get('wombat.data.type')
+        matching_id = wdt.search(cr, uid, [('name', '=', m_name)],
+                                     context=context)
+        if matching_id:
+            match = wdt.browse(cr, uid, matching_id[0], context)
+            model_obj = self.pool.get(match.model_id.model)
+            obj_id = self.find(cr, uid, match, model_obj, params, context)
+            if not obj_id:
+                vals = {}
+                for field in match.line_ids:
+                    if field.line_type == 'field':
+                        vals[field.name] = params.get(field.value, False)
+                    elif field.line_type == 'default':
+                        vals[field.name] = field.value
+                res = model_obj.create(cr, uid, vals, context)
         return res
 
-    def update(self, cr, uid, params,m_name, context=None):
+    def update(self, cr, uid, params, m_name, context=None):
         res = False
-        pp = self.pool.get(m_name)
-        p_ids = self.find(cr, uid, params, context)
-        if p_ids:
-            vals = {v: params[k] for k, v in MATCHING.get(m_name).items()}
-            res = pp.write(cr, uid, p_ids, vals, context)
+        wdt = self.pool.get('wombat.data.type')
+        matching_id = wdt.search(cr, uid, [('name', '=', m_name)],
+                                     context=context)
+        if matching_id:
+            match = wdt.browse(cr, uid, matching_id[0], context)
+            model_obj = self.pool.get(match.model_id.model)
+            obj_id = self.find(cr, uid, model_obj, params, context)
+            if obj_id:
+                vals = {}
+                for field in match.line_ids:
+                    if field.line_type == 'field':
+                        vals[field.name] = params.get(field.value, False)
+                    elif field.line_type == 'default':
+                        vals[field.name] = field.value
+                res = model_obj.write(cr, uid, obj_id, vals, context)
         return res

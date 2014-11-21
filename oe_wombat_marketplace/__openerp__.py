@@ -19,7 +19,16 @@
 #
 ##############################################################################
 
-import client
-import data_type
-import handler
-import serializer
+{
+    'name': 'OpenERP Wombat Marketplace',
+    'version': '0.1',
+    'author': 'OpenJAF',
+    'website': 'http://www.openjaf.com',
+    'category': 'Integration',
+    'description': """
+        OpenERP Wombat Marketplace
+    """,
+    'depends': ['oe_wombat_client'],
+    'data': ['data/data.xml'],
+    'installable': True
+}

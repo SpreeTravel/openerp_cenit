@@ -19,32 +19,31 @@
 #
 ##############################################################################
 
-from openerp.osv import fields
-from openerp.osv.orm import Model
+from openerp import models, fields
 import requests
 import simplejson
-from serializers import models
 
-class wombat_client(Model):
+
+class WombatClient(models.Model):
     _name = 'wombat.client'
-    _columns = {
-        'url': fields.char('URL', size=255),
-        'store': fields.char('Store', size=64),
-        'token': fields.char('Token', size=64),
-        'push_object_ids': fields.one2many('wombat.push.object', 'client_id',
-                                           'Models')
-    }
-    
+
+    url = fields.Char('URL', size=255)
+    store = fields.Char('Store', size=64)
+    token = fields.Char('Token', size=64)
+    push_object_ids = fields.One2many('wombat.push.object', 'client_id',
+                                      'Models')
+
     def push(self, cr, uid, ids, context=None):
         res = []
+        ws = self.pool.get('wombat.serializer')
         obj = self.browse(cr, uid, ids[0], context)
         for po in obj.push_object_ids:
             mo = self.pool.get(po.model_id.model, False)
             if mo:
+                models = []
                 model_ids = mo.search(cr, uid, [], context=context)
-                models = [mo.serialize(x) for x in mo.browse(cr, uid,
-                                                             model_ids,
-                                                             context)]
+                for x in mo.browse(cr, uid, model_ids, context):
+                    models.append(ws.serialize(cr, uid, x))
                 payload = simplejson.dumps({po.root: models})
                 headers = {
                     'Content-Type': 'application/json',
@@ -55,10 +54,10 @@ class wombat_client(Model):
                 res.append(r.status_code)
         return res
 
-class wombat_push_object(Model):
+
+class WombatPushObject(models.Model):
     _name = 'wombat.push.object'
-    _columns = {
-        'client_id': fields.many2one('wombat.client', 'Client'),
-        'root': fields.char('Root', size=64),
-        'model_id': fields.many2one('ir.model', 'Model')
-    }
+
+    client_id = fields.Many2one('wombat.client', 'Client')
+    root = fields.Char('Root', size=64)
+    model_id = fields.Many2one('ir.model', 'Model')

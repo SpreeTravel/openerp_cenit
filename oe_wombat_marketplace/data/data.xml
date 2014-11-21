@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data >
+        
+        <record id="data_type_usda" model="wombat.data.type">
+            <field name="name">Usda</field>
+			<field name="model_id" model="ir.model" search="[('model', '=', 'market.usda.data')]" />
+        </record>
+		
+		<record id="data_type_usda_markettype" model="wombat.data.type.line">
+            <field name="name">markettype</field>
+			<field name="line_type">field</field>
+			<field name="value">markettype</field>
+			<field name="data_type_id" ref="data_type_usda"/>
+        </record>
+		
+		<record id="data_type_usda_commodityname" model="wombat.data.type.line">
+            <field name="name">commodityname</field>
+			<field name="line_type">field</field>
+			<field name="value">commodityname</field>
+			<field name="data_type_id" ref="data_type_usda"/>
+			<field name="primary" eval="True"/>
+        </record>
+		
+		<record id="data_type_usda_cityname" model="wombat.data.type.line">
+            <field name="name">cityname</field>
+			<field name="line_type">field</field>
+			<field name="value">cityname</field>
+			<field name="data_type_id" ref="data_type_usda"/>
+        </record>
+		
+		<record id="data_type_usda_typecommodity" model="wombat.data.type.line">
+            <field name="name">typecommodity</field>
+			<field name="line_type">field</field>
+			<field name="value">typecommodity</field>
+			<field name="data_type_id" ref="data_type_usda"/>
+        </record>
+		
+		<record id="data_type_usda_package" model="wombat.data.type.line">
+            <field name="name">package</field>
+			<field name="line_type">field</field>
+			<field name="value">package</field>
+			<field name="data_type_id" ref="data_type_usda"/>
+        </record>
+		
+		<record id="data_type_usda_variety" model="wombat.data.type.line">
+            <field name="name">variety</field>
+			<field name="line_type">field</field>
+			<field name="value">variety</field>
+			<field name="data_type_id" ref="data_type_usda"/>
+        </record>
+		
+		<record id="data_type_usda_subvariety" model="wombat.data.type.line">
+            <field name="name">subvariety</field>
+			<field name="line_type">field</field>
+			<field name="value">subvariaty</field>
+			<field name="data_type_id" ref="data_type_usda"/>
+        </record>
+		
+		<record id="data_type_usda_grade" model="wombat.data.type.line">
+            <field name="name">grade</field>
+			<field name="line_type">field</field>
+			<field name="value">grade</field>
+			<field name="data_type_id" ref="data_type_usda"/>
+        </record>
+		
+		<record id="data_type_usda_date" model="wombat.data.type.line">
+            <field name="name">date</field>
+			<field name="line_type">field</field>
+			<field name="value">date</field>
+			<field name="data_type_id" ref="data_type_usda"/>
+        </record>
+		
+		<record id="data_type_usda_lowprice" model="wombat.data.type.line">
+            <field name="name">lowprice</field>
+			<field name="line_type">field</field>
+			<field name="value">lowprice</field>
+			<field name="data_type_id" ref="data_type_usda"/>
+        </record>
+		
+		<record id="data_type_usda_highprice" model="wombat.data.type.line">
+            <field name="name">highprice</field>
+			<field name="line_type">field</field>
+			<field name="value">highprice</field>
+			<field name="data_type_id" ref="data_type_usda"/>
+        </record>
+		
+		<record id="data_type_usda_average" model="wombat.data.type.line">
+            <field name="name">average</field>
+			<field name="line_type">field</field>
+			<field name="value">average</field>
+			<field name="data_type_id" ref="data_type_usda"/>
+        </record>
+		
+		<record id="data_type_usda_mostlylow" model="wombat.data.type.line">
+            <field name="name">mostlylow</field>
+			<field name="line_type">field</field>
+			<field name="value">mostlylow</field>
+			<field name="data_type_id" ref="data_type_usda"/>
+        </record>
+		
+		<record id="data_type_usda_mostlyhigh" model="wombat.data.type.line">
+            <field name="name">mostlyhigh</field>
+			<field name="line_type">field</field>
+			<field name="value">mostlyhigh</field>
+			<field name="data_type_id" ref="data_type_usda"/>
+        </record>
+		
+		<record id="data_type_usda_origin" model="wombat.data.type.line">
+            <field name="name">origin</field>
+			<field name="line_type">field</field>
+			<field name="value">origin</field>
+			<field name="data_type_id" ref="data_type_usda"/>
+        </record>
+		
+		<record id="data_type_usda_origindistrict" model="wombat.data.type.line">
+            <field name="name">origindistrict</field>
+			<field name="line_type">field</field>
+			<field name="value">origindistrict</field>
+			<field name="data_type_id" ref="data_type_usda"/>
+        </record>
+		
+		<record id="data_type_usda_itemsize" model="wombat.data.type.line">
+            <field name="name">itemsize</field>
+			<field name="line_type">field</field>
+			<field name="value">itemsize</field>
+			<field name="data_type_id" ref="data_type_usda"/>
+        </record>
+		
+		<record id="data_type_usda_markettone" model="wombat.data.type.line">
+            <field name="name">markettone</field>
+			<field name="line_type">field</field>
+			<field name="value">markettone</field>
+			<field name="data_type_id" ref="data_type_usda"/>
+        </record>
+		
+		<record id="data_type_usda_per_lb" model="wombat.data.type.line">
+            <field name="name">per_lb</field>
+			<field name="line_type">field</field>
+			<field name="value">per_lb</field>
+			<field name="data_type_id" ref="data_type_usda"/>
+        </record>
+		
+		<record id="data_type_usda_date_created" model="wombat.data.type.line">
+            <field name="name">date_created</field>
+			<field name="line_type">field</field>
+			<field name="value">date_created</field>
+			<field name="data_type_id" ref="data_type_usda"/>
+        </record>
+		   
+    </data>
+</openerp>
