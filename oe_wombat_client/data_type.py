@@ -29,12 +29,6 @@ class WombatDataType(models.Model):
     model_id = fields.Many2one('ir.model', 'Model')
     line_ids = fields.One2many('wombat.data.type.line', 'data_type_id',
                                'Lines')
-    field_id = fields.Char(compute='_compute_field_id')
-
-    @api.one
-    def _compute_field_id(self):
-        fields = [x.name for x in self.line_ids if x.primary]
-        return fields and fields[0] or False
 
 
 class WombatDataTypeLine(models.Model):
