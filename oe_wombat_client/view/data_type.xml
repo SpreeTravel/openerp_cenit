@@ -28,8 +28,9 @@
 							<field name="line_ids" nolabel="1" >
 								<tree string="Lines" editable="bottom">
 									<field name="name" />
-									<field name="line_type" />
 									<field name="value" />
+									<field name="line_type" />
+									<field name="reference_id" />
 									<field name="line_cardinality" />
 									<field name="primary" />
 								</tree>
