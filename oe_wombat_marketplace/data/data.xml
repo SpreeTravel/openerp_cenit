@@ -5,7 +5,7 @@
 		<!-- Usda -->
         
         <record id="data_type_usda" model="wombat.data.type">
-            <field name="name">Usda</field>
+            <field name="name">usda</field>
 			<field name="model_id" model="ir.model" search="[('model', '=', 'market.usda.data')]" />
         </record>
 		

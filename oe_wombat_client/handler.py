@@ -7,10 +7,10 @@ class WombatHandler(models.TransientModel):
     _name = 'wombat.handler'
 
     def find(self, cr, uid, match, model_obj, params, context=None):
-        fp = [x.name for x in match.line_ids if x.primary]
+        fp = [x for x in match.line_ids if x.primary]
         if fp:
             fp = fp[0]
-            to_search = [(fp, '=', params[fp])]
+            to_search = [(fp.name, '=', params[fp.value])]
             obj_ids = model_obj.search(cr, uid, to_search, context=context)
             if obj_ids:
                 return obj_ids[0]

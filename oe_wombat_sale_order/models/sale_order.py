@@ -7,6 +7,19 @@ class ProductTemplate(models.Model):
     _name = 'product.template'
     _inherit = 'product.template'
 
+    def _set_product_id(self, cr, uid, oid, name, value, args, context=None):
+        product = self.browse(cr, uid, oid, context=context)
+        product.write({'default_code': value}, context=context)
+
+    def _get_product_id(self, cr, uid, ids, name, args, context=None):
+        result = dict.fromkeys(ids, False)
+        for obj in self.browse(cr, uid, ids, context=context):
+            oid = obj.name.replace(' ', '-')
+            if obj.default_code:
+                oid = obj.default_code
+            result[obj.id] = oid
+        return result
+
     def _set_taxons(self, cr, uid, oid, name, value, args, context=None):
         if not value:
             return False
@@ -100,5 +113,7 @@ class ProductTemplate(models.Model):
         'options': fields.function(_get_options, method=True, type='char',
                                    fnct_inv=_set_options),
         'properties': fields.function(_get_properties, method=True,
-                                      type='char', fnct_inv=_set_properties)
+                                      type='char', fnct_inv=_set_properties),
+        'product_id': fields.function(_get_product_id, method=True,
+                                      type='char', fnct_inv=_set_product_id),
     }
