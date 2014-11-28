@@ -21,7 +21,6 @@
 			<field name="line_type">field</field>
 			<field name="value">commodityname</field>
 			<field name="data_type_id" ref="data_type_usda"/>
-			<field name="primary" eval="True"/>
         </record>
 		
 		<record id="data_type_usda_cityname" model="wombat.data.type.line">
@@ -153,7 +152,7 @@
 		<!-- Commodity -->
 		
 		<record id="data_type_commodity" model="wombat.data.type">
-            <field name="name">Commodity</field>
+            <field name="name">commodity</field>
 			<field name="model_id" model="ir.model" search="[('model', '=', 'market.commodity')]" />
         </record>
 		
@@ -161,7 +160,6 @@
             <field name="name">name</field>
 			<field name="line_type">field</field>
 			<field name="value">commodity</field>
-			<field name="primary" eval="True"/>
 			<field name="data_type_id" ref="data_type_commodity"/>
         </record>
 		
@@ -183,13 +181,14 @@
             <field name="name">slug</field>
 			<field name="line_type">field</field>
 			<field name="value">slug</field>
+			<field name="primary" eval="True"/>
 			<field name="data_type_id" ref="data_type_commodity"/>
         </record>
 		
 		<!-- Variety -->
 		
 		<record id="data_type_variety" model="wombat.data.type">
-            <field name="name">Variety</field>
+            <field name="name">variety</field>
 			<field name="model_id" model="ir.model" search="[('model', '=', 'market.variety')]" />
         </record>
 		
@@ -197,7 +196,6 @@
             <field name="name">name</field>
 			<field name="line_type">field</field>
 			<field name="value">variety</field>
-			<field name="primary" eval="True"/>
 			<field name="data_type_id" ref="data_type_variety"/>
         </record>
 		
@@ -205,6 +203,7 @@
             <field name="name">slug</field>
 			<field name="line_type">field</field>
 			<field name="value">slug</field>
+			<field name="primary" eval="True"/>
 			<field name="data_type_id" ref="data_type_variety"/>
         </record>
 		
@@ -219,7 +218,7 @@
 		<!-- Package -->
 		
 		<record id="data_type_package" model="wombat.data.type">
-            <field name="name">Package</field>
+            <field name="name">package</field>
 			<field name="model_id" model="ir.model" search="[('model', '=', 'market.package')]" />
         </record>
 		
@@ -227,7 +226,6 @@
             <field name="name">name</field>
 			<field name="line_type">field</field>
 			<field name="value">package</field>
-			<field name="primary" eval="True"/>
 			<field name="data_type_id" ref="data_type_package"/>
         </record>
 		
@@ -242,6 +240,7 @@
             <field name="name">slug</field>
 			<field name="line_type">field</field>
 			<field name="value">slug</field>
+			<field name="primary" eval="True"/>
 			<field name="data_type_id" ref="data_type_package"/>
         </record>
 		

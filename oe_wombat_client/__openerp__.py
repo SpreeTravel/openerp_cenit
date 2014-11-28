@@ -28,7 +28,7 @@
     'description': """
         OpenERP Wombat Client
     """,
-    'depends': ['sale_stock'],
+    'depends': ['base'],
     'update_xml': [
         'view/client.xml',
         'view/data_type.xml'
