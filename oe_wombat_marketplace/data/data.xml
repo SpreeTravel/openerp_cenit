@@ -180,7 +180,7 @@
 		<record id="data_type_commodity_slug" model="wombat.data.type.line">
             <field name="name">slug</field>
 			<field name="line_type">field</field>
-			<field name="value">slug</field>
+			<field name="value">id</field>
 			<field name="primary" eval="True"/>
 			<field name="data_type_id" ref="data_type_commodity"/>
         </record>
@@ -202,7 +202,7 @@
 		<record id="data_type_variety_slug" model="wombat.data.type.line">
             <field name="name">slug</field>
 			<field name="line_type">field</field>
-			<field name="value">slug</field>
+			<field name="value">id</field>
 			<field name="primary" eval="True"/>
 			<field name="data_type_id" ref="data_type_variety"/>
         </record>
@@ -239,7 +239,7 @@
 		<record id="data_type_package_slug" model="wombat.data.type.line">
             <field name="name">slug</field>
 			<field name="line_type">field</field>
-			<field name="value">slug</field>
+			<field name="value">id</field>
 			<field name="primary" eval="True"/>
 			<field name="data_type_id" ref="data_type_package"/>
         </record>

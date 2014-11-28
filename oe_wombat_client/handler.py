@@ -8,7 +8,7 @@ class WombatHandler(models.TransientModel):
 
     def find(self, cr, uid, match, model_obj, params, context=None):
         fp = [x for x in match.line_ids if x.primary]
-        if fp:
+        if fp and params.get(fp.value, False):
             fp = fp[0]
             to_search = [(fp.name, '=', params[fp.value])]
             obj_ids = model_obj.search(cr, uid, to_search, context=context)
