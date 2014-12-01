@@ -55,7 +55,7 @@ class WombatHandler(models.TransientModel):
         if matching_id:
             match = wdt.browse(cr, uid, matching_id[0], context)
             model_obj = self.pool.get(match.model_id.model)
-            obj_id = self.find(cr, uid, model_obj, params, context)
+            obj_id = self.find(cr, uid, match, model_obj, params, context)
             if obj_id:
                 vals = {}
                 for field in match.line_ids:

@@ -9,7 +9,7 @@ class WombatSerializer(models.TransientModel):
     def serialize(self, cr, uid, obj, context=None):
         vals = {}
         wdt = self.pool.get('wombat.data.type')
-        matching_id = wdt.search(cr, uid, [('name', '=', obj._name)],
+        matching_id = wdt.search(cr, uid, [('model_id.model', '=', obj._name)],
                                  context=context)
         if matching_id:
             match = wdt.browse(cr, uid, matching_id[0], context)

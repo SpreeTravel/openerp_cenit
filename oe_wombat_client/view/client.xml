@@ -25,21 +25,21 @@
         <field name="arch" type="xml">
             <form string="Client" version="7.0">
             	<sheet>
-            		<group>
-						<group>
-							<field name="url"/>
-							<field name="store"/>
-							<field name="token"/>
-						</group>
-						<group>
+					<group>
+						<field name="url"/>
+						<field name="store"/>
+						<field name="token"/>
+					</group>
+					<notebook>
+						<page string="Objects">
 							<field name="push_object_ids" nolabel="1" >
 								<tree string="Push objects" editable="bottom">
 									<field name="root" />
 									<field name="model_id" />
 								</tree>
 							</field>
-						</group>
-					</group>
+						</page>
+					</notebook>
 				</sheet>
             </form>
         </field>

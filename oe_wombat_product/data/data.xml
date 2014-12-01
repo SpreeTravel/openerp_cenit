@@ -12,8 +12,15 @@
 		<record id="data_type_product_default_code" model="wombat.data.type.line">
             <field name="name">default_code</field>
 			<field name="line_type">field</field>
-			<field name="value">sku</field>
+			<field name="value">id</field>
 			<field name="primary" eval="True"/>
+			<field name="data_type_id" ref="data_type_product"/>
+        </record>
+		
+		<record id="data_type_product_default_code" model="wombat.data.type.line">
+            <field name="name">ean13</field>
+			<field name="line_type">field</field>
+			<field name="value">sku</field>
 			<field name="data_type_id" ref="data_type_product"/>
         </record>
 		
@@ -21,6 +28,13 @@
             <field name="name">name</field>
 			<field name="line_type">field</field>
 			<field name="value">name</field>
+			<field name="data_type_id" ref="data_type_product"/>
+        </record>
+		
+		<record id="data_type_product_description" model="wombat.data.type.line">
+            <field name="name">description</field>
+			<field name="line_type">field</field>
+			<field name="value">description</field>
 			<field name="data_type_id" ref="data_type_product"/>
         </record>
 		

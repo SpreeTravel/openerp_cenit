@@ -28,7 +28,7 @@
     'description': """
         OpenERP Wombat Product
     """,
-    'depends': ['oe_wombat_client'],
+    'depends': ['oe_wombat_client', 'product'],
     'data': ['data/data.xml'],
     'installable': True
 }
