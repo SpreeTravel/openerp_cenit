@@ -28,6 +28,7 @@
     'description': """
         OpenERP Wombat Sale Order
     """,
-    'depends': ['oe_wombat_product'],
+    'depends': ['oe_wombat_product', 'sale'],
+    'data': ['data/data.xml'],
     'installable': True
 }

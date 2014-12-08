@@ -65,7 +65,8 @@ class ProductTemplate(models.Model):
                 'value_ids': [(6, 0, v)]
             }
             attribute_lines.append((0, 0, vals))
-        self.write(cr, uid, oid, {'attribute_line_ids': attribute_lines})
+        if attribute_lines:
+            self.write(cr, uid, oid, {'attribute_line_ids': attribute_lines})
 
     def _get_variants(self, cr, uid, ids, name, args, context=None):
         result = dict.fromkeys(ids, False)
@@ -107,6 +108,8 @@ class ProductTemplate(models.Model):
         pav = self.pool.get('product.attribute.value')
         attribute_lines = []
         for a, v in value.items():
+            if not v:
+                continue
             attr = pa.search(cr, uid, [('name', '=', a)], context=context)
             if attr:
                 attr_id = attr[0]
@@ -123,7 +126,8 @@ class ProductTemplate(models.Model):
                                         'attribute_id': attr_id,
                                         'value_ids': [(6, 0, [attr_value_id])]
                                     }))
-        self.write(cr, uid, oid, {'attribute_line_ids': attribute_lines})
+        if attribute_lines:
+            self.write(cr, uid, oid, {'attribute_line_ids': attribute_lines})
 
     def _get_properties(self, cr, uid, ids, name, args, context=None):
         result = dict.fromkeys(ids, False)

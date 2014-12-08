@@ -6,6 +6,13 @@ from openerp import models
 class WombatSerializer(models.TransientModel):
     _name = 'wombat.serializer'
 
+    def find_reference(self, cr, uid, field, obj, context=None):
+        if field.reference_id:
+            other_field = [x for x in field.reference_id.line_ids if x.primary]
+            if other_field:
+                return getattr(getattr(obj, field.name), other_field[0])
+        return False
+
     def serialize(self, cr, uid, obj, context=None):
         vals = {}
         wdt = self.pool.get('wombat.data.type')
@@ -15,7 +22,22 @@ class WombatSerializer(models.TransientModel):
             match = wdt.browse(cr, uid, matching_id[0], context)
             for field in match.line_ids:
                 if field.line_type == 'field':
-                    vals[field.value] = getattr(obj, field.name)
+                    try:
+                        vals[field.value] = eval(getattr(obj, field.name))
+                    except:
+                        vals[field.value] = getattr(obj, field.name)
+                elif field.line_type == 'model':
+                    relation = getattr(obj, field.name)
+                    if field.line_cardinality == '2many':
+                        vals[field.value] = [self.serialize(cr, uid, x, context) for x in relation]
+                    else:
+                        vals[field.value] = self.serialize(cr, uid, relation, context)
+                elif field.line_type == 'reference':
+                    vals[field.value] = self.find_reference(cr, uid, field, obj, context)
                 elif field.line_type == 'default':
                     vals[field.name] = field.value
         return vals
+
+    def serialize_model_id(self, cr, uid, model, oid, context=None):
+        obj = self.pool.get(model).browse(cr, uid, oid)
+        return self.serialize(cr, uid, obj, context)

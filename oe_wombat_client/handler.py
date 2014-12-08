@@ -16,55 +16,58 @@ class WombatHandler(models.TransientModel):
                 return obj_ids[0]
         return False
 
-    def find_reference(self, cr, uid, field, params, context):
+    def find_reference(self, cr, uid, field, params, context=None):
         if field.reference_id:
-            model_obj = self.pool.get(field.reference_id.model_id.name)
+            model_obj = self.pool.get(field.reference_id.model_id.model)
             fparams = {field.value: params[field.value]}
             match = field.reference_id
             obj_id = self.find(cr, uid, match, model_obj, fparams, context)
             return obj_id
         return False
 
-    def add(self, cr, uid, params, m_name, context=None):
-        res = False
+    def process(self, cr, uid, match, params, context=None):
+        vals = {}
+        for field in match.line_ids:
+            if field.line_type == 'field':
+                vals[field.name] = params.get(field.value, False)
+            elif field.line_type == 'model':
+                if field.line_cardinality == '2many':
+                    vals[field.name] = []
+                    for x in params.get(field.value, []):
+                        item = self.process(cr, uid, field.reference_id, x)
+                        vals[field.name].append((0, 0, item))
+            elif field.line_type == 'reference':
+                vals[field.name] = self.find_reference(cr, uid, field,
+                                                       params, context)
+            elif field.line_type == 'default':
+                vals[field.name] = field.value
+        return vals
+
+    def get_match(self, cr, uid, m_name, context=None):
         wdt = self.pool.get('wombat.data.type')
-        matching_id = wdt.search(cr, uid, [('name', '=', m_name)],
-                                     context=context)
+        matching_id = wdt.search(cr, uid, [('name', '=', m_name)], context)
         if matching_id:
-            match = wdt.browse(cr, uid, matching_id[0], context)
-            model_obj = self.pool.get(match.model_id.model)
-            obj_id = self.find(cr, uid, match, model_obj, params, context)
-            if not obj_id:
-                vals = {}
-                for field in match.line_ids:
-                    if field.line_type == 'field':
-                        vals[field.name] = params.get(field.value, False)
-                    elif field.line_type == 'reference':
-                        vals[field.name] = self.find_reference(cr, uid, field,
-                                                               params, context)
-                    elif field.line_type == 'default':
-                        vals[field.name] = field.value
-                res = model_obj.create(cr, uid, vals, context)
-        return res
+            return wdt.browse(cr, uid, matching_id[0], context)
+        return False
+
+    def add(self, cr, uid, params, m_name, context=None):
+        match = self.get_match(cr, uid, m_name, context)
+        if not match:
+            return False
+        model_obj = self.pool.get(match.model_id.model)
+        obj_id = self.find(cr, uid, match, model_obj, params, context)
+        if not obj_id:
+            vals = self.process(cr, uid, match, params, context)
+            obj_id = model_obj.create(cr, uid, vals, context)
+        return obj_id
 
     def update(self, cr, uid, params, m_name, context=None):
-        res = False
-        wdt = self.pool.get('wombat.data.type')
-        matching_id = wdt.search(cr, uid, [('name', '=', m_name)],
-                                     context=context)
-        if matching_id:
-            match = wdt.browse(cr, uid, matching_id[0], context)
-            model_obj = self.pool.get(match.model_id.model)
-            obj_id = self.find(cr, uid, match, model_obj, params, context)
-            if obj_id:
-                vals = {}
-                for field in match.line_ids:
-                    if field.line_type == 'field':
-                        vals[field.name] = params.get(field.value, False)
-                    elif field.line_type == 'reference':
-                        vals[field.name] = self.find_reference(cr, uid, field,
-                                                               params, context)
-                    elif field.line_type == 'default':
-                        vals[field.name] = field.value
-                res = model_obj.write(cr, uid, obj_id, vals, context)
-        return res
+        match = self.get_match(cr, uid, m_name, context)
+        if not match:
+            return False
+        model_obj = self.pool.get(match.model_id.model)
+        obj_id = self.find(cr, uid, match, model_obj, params, context)
+        if obj_id:
+            vals = self.process(cr, uid, match, params, context)
+            model_obj.write(cr, uid, obj_id, vals, context)
+        return obj_id

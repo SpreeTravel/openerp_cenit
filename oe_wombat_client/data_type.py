@@ -40,7 +40,7 @@ class WombatDataTypeLine(models.Model):
                                   ('model', 'Model'), ('default', 'Default'),
                                   ('reference', 'Reference')],
                                  'Type', default='field')
-    reference_id = fields.Many2one('wombat.data.type', 'Reference Type')
+    reference_id = fields.Many2one('wombat.data.type', 'Reference')
     line_cardinality = fields.Selection([('2many', '2many'), ('2one', '2one')],
                                         'Cardinality')
     value = fields.Char('Value')

@@ -45,15 +45,6 @@
 			<field name="data_type_id" ref="data_type_sale_order"/>
         </record>
 		
-		<record id="data_type_usda_date_order_line" model="wombat.data.type.line">
-            <field name="name">order_line</field>
-			<field name="line_type">model</field>
-			<field name="value">line_items</field>
-			<field name="line_cardinality">2many</field>
-			<field name="reference_id" ref="data_type_sale_order_line" />
-			<field name="data_type_id" ref="data_type_sale_order"/>
-        </record>
-		
 		<!-- Sale Order Line -->
         
         <record id="data_type_sale_order_line" model="wombat.data.type">
@@ -88,6 +79,17 @@
 			<field name="line_type">field</field>
 			<field name="value">price</field>			
 			<field name="data_type_id" ref="data_type_sale_order_line"/>
+        </record>
+		
+		<!-- ... -->
+		
+		<record id="data_type_usda_date_order_line" model="wombat.data.type.line">
+            <field name="name">order_line</field>
+			<field name="line_type">model</field>
+			<field name="value">line_items</field>
+			<field name="line_cardinality">2many</field>
+			<field name="reference_id" ref="data_type_sale_order_line" />
+			<field name="data_type_id" ref="data_type_sale_order"/>
         </record>
 		   
     </data>
