@@ -10,7 +10,10 @@ class WombatSerializer(models.TransientModel):
         if field.reference_id:
             other_field = [x for x in field.reference_id.line_ids if x.primary]
             if other_field:
-                return getattr(getattr(obj, field.name), other_field[0])
+                value = getattr(getattr(obj, field.name), other_field[0].name)
+                if not value:
+                    value = getattr(getattr(obj, field.name), 'name')
+                return value
         return False
 
     def serialize(self, cr, uid, obj, context=None):
