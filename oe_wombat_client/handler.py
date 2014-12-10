@@ -14,6 +14,11 @@ class WombatHandler(models.TransientModel):
             obj_ids = model_obj.search(cr, uid, to_search, context=context)
             if obj_ids:
                 return obj_ids[0]
+        elif len(params.values()) == 1:
+            to_search = [('name', '=', params.values()[0])]
+            obj_ids = model_obj.search(cr, uid, to_search, context=context)
+            if obj_ids:
+                return obj_ids[0]
         return False
 
     def find_reference(self, cr, uid, field, params, context=None):
