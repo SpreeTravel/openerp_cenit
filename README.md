@@ -1,4 +1,4 @@
 openerp_wombat
 ==============
 
-OpenERP Wombat
+OpenERP Wombat integration

@@ -18,27 +18,4 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
-from openerp.osv.orm import Model
-
-
-class product_serializer(Model):
-    _name = 'product.product'
-    _inherit = 'product.product'
-
-    def serialize(self, product, context=None):
-        vals = {
-            'id': self._get_id(product),
-            'name': product.name,
-            'sku': product.default_code,
-            'price': product.list_price,
-            'cost_price': product.standard_price,
-            'available_on': '2014-01-29T14:01:28.000Z',
-            'shipping_category': 'Default'
-        }
-        return vals
-
-    def _get_id(self, product):
-        if product.default_code:
-            return product.default_code
-        return product.name.replace(' ', '-')
+import models

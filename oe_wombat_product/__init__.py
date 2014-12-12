@@ -19,19 +19,4 @@
 #
 ##############################################################################
 
-{
-    'name': 'OpenERP Wombat Client',
-    'version': '0.1',
-    'author': 'OpenJAF',
-    'website': 'http://www.openjaf.com',
-    'category': 'Integration',
-    'description': """
-        OpenERP Wombat Client
-    """,
-    'depends': ['base', 'base_action_rule'],
-    'update_xml': [
-        'view/client.xml',
-        'view/data_type.xml'
-    ],
-    'installable': True
-}
+import models
