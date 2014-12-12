@@ -50,7 +50,7 @@
         <field name="view_id" ref="wombat_data_type_view_tree"/>
     </record>
 	
-	<menuitem id="wombat_data_type_menu" sequence="2" parent="wombat" action="wombat_data_type_action"/>
+	<menuitem id="wombat_data_type_menu" sequence="2" parent="integration" action="wombat_data_type_action"/>
 
   </data>
 </openerp>
