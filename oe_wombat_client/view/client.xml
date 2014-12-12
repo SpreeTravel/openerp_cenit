@@ -44,6 +44,7 @@
 									<field name="model_id" />
 									<field name="push_type" />
 									<field name="push_method" />
+									<button name="push_all" type="object" string="Push" icon="gtk-go-forward"/>
 								</tree>
 							</field>
 						</page>

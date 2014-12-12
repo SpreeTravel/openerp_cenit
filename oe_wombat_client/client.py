@@ -49,7 +49,7 @@ class WombatPushObject(models.Model):
     client_id = fields.Many2one('wombat.client', 'Client')
     root = fields.Char('Root', size=64)
     model_id = fields.Many2one('ir.model', 'Model')
-    push_type = fields.Selection([('manual', 'Manual'),
+    push_type = fields.Selection([('only manual', 'Only Manual'),
                                   ('interval', 'Interval'),
                                   ('on_create', 'On Create'),
                                   ('on_write', 'On Update'),
@@ -84,8 +84,23 @@ class WombatPushObject(models.Model):
             elif obj.ir_cron_id:
                 ic_obj.unlink(cr, uid, obj.ir_cron_id.id)
         elif obj.push_type == 'interval':
-            pass
-        elif obj.push_type == ['on_create', 'on_write', 'on_create_or_write']:
+            if obj.ir_cron_id:
+                pass
+            else:
+                vals_ic = {
+                    'name': 'push_%s' % obj.model_id.model,
+                    'interval_number': 10,
+                    'interval_type': 'minutes',
+                    'numbercall': -1,
+                    'model': 'wombat.push.object',
+                    'function': 'push_all',
+                    'args': '([%s],)' % str(obj.id)
+                }
+                ic_id = ic_obj.create(cr, uid, vals_ic)
+                self.write(cr, uid, obj.id, {'ir_cron_id': ic_id})
+                if obj.base_action_rule_id:
+                    bar_obj.unlink(cr, uid, obj.base_action_rule_id.id)
+        elif obj.push_type in ['on_create', 'on_write', 'on_create_or_write']:
             if obj.base_action_rule_id:
                 bar_obj.write(cr, uid, obj.base_action_rule_id.id,
                               {'kind': obj.push_type})
