@@ -20,18 +20,15 @@
 ##############################################################################
 
 {
-    'name': 'OpenERP Wombat Client',
+    'name': 'OpenERP Wombat Purchase Order',
     'version': '0.1',
     'author': 'OpenJAF',
     'website': 'http://www.openjaf.com',
     'category': 'Integration',
     'description': """
-        OpenERP Wombat Client
+        OpenERP Wombat Purchase Order
     """,
-    'depends': ['base', 'base_action_rule'],
-    'data': [
-        'view/client.xml',
-        'view/data_type.xml'
-    ],
+    'depends': ['oe_wombat_product', 'purchase'],
+    'data': ['data/data.xml'],
     'installable': True
 }

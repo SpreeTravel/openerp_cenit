@@ -9,7 +9,7 @@
 			<field name="model_id" model="ir.model" search="[('model', '=', 'sale.order')]" />
         </record>
 		
-		<record id="data_type_usda_name" model="wombat.data.type.line">
+		<record id="data_type_sale_order_name" model="wombat.data.type.line">
             <field name="name">name</field>
 			<field name="line_type">field</field>
 			<field name="value">id</field>
@@ -17,14 +17,14 @@
 			<field name="data_type_id" ref="data_type_sale_order"/>
         </record>
 		
-		<record id="data_type_usda_state" model="wombat.data.type.line">
+		<record id="data_type_sale_order_state" model="wombat.data.type.line">
             <field name="name">state</field>
 			<field name="line_type">field</field>
 			<field name="value">status</field>
 			<field name="data_type_id" ref="data_type_sale_order"/>
         </record>
 		
-		<record id="data_type_usda_currency" model="wombat.data.type.line">
+		<record id="data_type_sale_order_currency" model="wombat.data.type.line">
             <field name="name">currency_id</field>
 			<field name="line_type">reference</field>
 			<field name="value">currency</field>
@@ -32,14 +32,14 @@
 			<field name="data_type_id" ref="data_type_sale_order"/>
         </record>
 		
-		<record id="data_type_usda_date_confirm" model="wombat.data.type.line">
+		<record id="data_type_sale_order_date_confirm" model="wombat.data.type.line">
             <field name="name">date_confirm</field>
 			<field name="line_type">field</field>
 			<field name="value">placed_on</field>
 			<field name="data_type_id" ref="data_type_sale_order"/>
         </record>
 		
-		<record id="data_type_usda_date_totals" model="wombat.data.type.line">
+		<record id="data_type_sale_order_date_totals" model="wombat.data.type.line">
             <field name="name">totals</field>
 			<field name="line_type">field</field>
 			<field name="value">totals</field>
@@ -53,7 +53,7 @@
 			<field name="model_id" model="ir.model" search="[('model', '=', 'sale.order.line')]" />
         </record>
 		
-		<record id="data_type_usda_name" model="wombat.data.type.line">
+		<record id="data_type_sale_order_line_name" model="wombat.data.type.line">
             <field name="name">name</field>
 			<field name="line_type">field</field>
 			<field name="value">name</field>
@@ -61,7 +61,7 @@
 			<field name="data_type_id" ref="data_type_sale_order_line"/>
         </record>
 		
-		<record id="data_type_usda_product_id" model="wombat.data.type.line">
+		<record id="data_type_sale_order_line_product_id" model="wombat.data.type.line">
             <field name="name">product_id</field>
 			<field name="line_type">reference</field>
 			<field name="value">product_id</field>
@@ -69,14 +69,14 @@
 			<field name="data_type_id" ref="data_type_sale_order_line"/>
         </record>
 		
-		<record id="data_type_usda_quantity" model="wombat.data.type.line">
+		<record id="data_type_sale_order_line_quantity" model="wombat.data.type.line">
             <field name="name">product_uom_qty</field>
 			<field name="line_type">field</field>
 			<field name="value">quantity</field>			
 			<field name="data_type_id" ref="data_type_sale_order_line"/>
         </record>
 		
-		<record id="data_type_usda_price_unit" model="wombat.data.type.line">
+		<record id="data_type_sale_order_line_price_unit" model="wombat.data.type.line">
             <field name="name">price_unit</field>
 			<field name="line_type">field</field>
 			<field name="value">price</field>			
@@ -85,7 +85,7 @@
 		
 		<!-- ... -->
 		
-		<record id="data_type_usda_date_order_line" model="wombat.data.type.line">
+		<record id="data_type_sale_order_order_line" model="wombat.data.type.line">
             <field name="name">order_line</field>
 			<field name="line_type">model</field>
 			<field name="value">line_items</field>

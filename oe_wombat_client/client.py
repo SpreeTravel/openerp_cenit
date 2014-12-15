@@ -49,12 +49,12 @@ class WombatPushObject(models.Model):
     client_id = fields.Many2one('wombat.client', 'Client')
     root = fields.Char('Root', size=64)
     model_id = fields.Many2one('ir.model', 'Model')
-    push_type = fields.Selection([('only manual', 'Only Manual'),
+    push_type = fields.Selection([('only_manual', 'Only Manual'),
                                   ('interval', 'Interval'),
                                   ('on_create', 'On Create'),
                                   ('on_write', 'On Update'),
                                   ('on_create_or_write', 'On Create & Update')
-                                  ], 'Push Type', default='manual')
+                                  ], 'Push Type', default='only_manual')
     push_method = fields.Selection([('push_http_post', 'HTTP POST')], 'Method',
                                    default='push_http_post')
     base_action_rule_id = fields.Many2one('base.action.rule', 'Action Rule')
@@ -78,7 +78,7 @@ class WombatPushObject(models.Model):
         ic_obj = self.pool.get('ir.cron')
         ias_obj = self.pool.get('ir.actions.server')
         bar_obj = self.pool.get('base.action.rule')
-        if obj.push_type == 'manual':
+        if obj.push_type == 'only_manual':
             if obj.base_action_rule_id:
                 bar_obj.unlink(cr, uid, obj.base_action_rule_id.id)
             elif obj.ir_cron_id:
@@ -128,7 +128,7 @@ class WombatPushObject(models.Model):
     def process(self, cr, uid, model_obj, context=None):
         domain = [('model_id.model', '=', model_obj._name)]
         if context.get('client_id', False):
-            domain.append(('client_id', '=', context.get['client_id']))
+            domain.append(('client_id', '=', context.get('client_id')))
         push_obj_ids = self.search(cr, uid, domain, context=context)
         if push_obj_ids:
             push_obj = self.browse(cr, uid, push_obj_ids[0])

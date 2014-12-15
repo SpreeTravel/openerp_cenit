@@ -70,3 +70,16 @@ class WombatHandler(models.TransientModel):
             vals = self.process(cr, uid, match, params, context)
             model_obj.write(cr, uid, obj_id, vals, context)
         return obj_id
+
+    def synch(self, cr, uid, params, m_name, context=None):
+        match = self.get_match(cr, uid, m_name, context)
+        if not match:
+            return False
+        vals = self.process(cr, uid, match, params, context)
+        model_obj = self.pool.get(match.model_id.model)
+        obj_id = self.find(cr, uid, match, model_obj, params, context)
+        if obj_id:
+            model_obj.write(cr, uid, obj_id, vals, context)
+        else:
+            obj_id = model_obj.create(cr, uid, vals, context)
+        return obj_id
