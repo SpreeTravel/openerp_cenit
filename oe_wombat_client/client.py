@@ -133,7 +133,7 @@ class WombatPushObject(models.Model):
         if push_obj_ids:
             push_obj = self.browse(cr, uid, push_obj_ids[0])
             ws = self.pool.get('wombat.serializer')
-            data = ws.serialize(cr, uid, model_obj)
+            data = [ws.serialize(cr, uid, model_obj)]
             return self.push(cr, uid, push_obj, data, context)
         return False
 
