@@ -20,15 +20,15 @@
 ##############################################################################
 
 {
-    'name': 'OpenERP Wombat Product',
+    'name': 'OpenERP Cenit Sale Order',
     'version': '0.1',
     'author': 'OpenJAF',
     'website': 'http://www.openjaf.com',
     'category': 'Integration',
     'description': """
-        OpenERP Wombat Product
+        OpenERP Cenit Sale Order
     """,
-    'depends': ['oe_wombat_client', 'product'],
+    'depends': ['oe_cenit_product', 'sale'],
     'data': ['data/data.xml'],
     'installable': True
 }

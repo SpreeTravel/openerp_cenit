@@ -2,9 +2,9 @@
 <openerp>
   <data>
 	
-	<record id="wombat_data_type_view_tree" model="ir.ui.view">
-        <field name="name">wombat.data.type.view.tree</field>
-        <field name="model">wombat.data.type</field>
+	<record id="cenit_data_type_view_tree" model="ir.ui.view">
+        <field name="name">cenit.data.type.view.tree</field>
+        <field name="model">cenit.data.type</field>
         <field name="arch" type="xml">
             <tree string="data_types" >
             	<field name="name"/>
@@ -13,9 +13,9 @@
         </field>
     </record>
 	
-	<record id="wombat_data_type_view_form" model="ir.ui.view">
-        <field name="name">wombat.data.type.view.form</field>
-        <field name="model">wombat.data.type</field>
+	<record id="cenit_data_type_view_form" model="ir.ui.view">
+        <field name="name">cenit.data.type.view.form</field>
+        <field name="model">cenit.data.type</field>
         <field name="arch" type="xml">
             <form string="Data Type" version="7.0">
             	<sheet>
@@ -42,15 +42,15 @@
         </field>
     </record>
     
-    <record id="wombat_data_type_action" model="ir.actions.act_window">
+    <record id="cenit_data_type_action" model="ir.actions.act_window">
         <field name="name">Data Types</field>
-        <field name="res_model">wombat.data.type</field>
+        <field name="res_model">cenit.data.type</field>
         <field name="view_type">form</field>
         <field name="view_mode">tree,form</field>
-        <field name="view_id" ref="wombat_data_type_view_tree"/>
+        <field name="view_id" ref="cenit_data_type_view_tree"/>
     </record>
 	
-	<menuitem id="wombat_data_type_menu" sequence="2" parent="integration" action="wombat_data_type_action"/>
+	<menuitem id="cenit_data_type_menu" sequence="2" parent="integration" action="cenit_data_type_action"/>
 
   </data>
 </openerp>

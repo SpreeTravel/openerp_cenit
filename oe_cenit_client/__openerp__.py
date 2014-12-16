@@ -20,15 +20,18 @@
 ##############################################################################
 
 {
-    'name': 'OpenERP Wombat Webhook',
+    'name': 'OpenERP Cenit Client',
     'version': '0.1',
     'author': 'OpenJAF',
     'website': 'http://www.openjaf.com',
     'category': 'Integration',
     'description': """
-        OpenERP Wombat Webhook.
+        OpenERP Cenit Client
     """,
-    'depends': ['web'],
-    'installable': True,
-    'auto_install': True
+    'depends': ['base', 'base_action_rule'],
+    'data': [
+        'view/client.xml',
+        'view/data_type.xml'
+    ],
+    'installable': True
 }

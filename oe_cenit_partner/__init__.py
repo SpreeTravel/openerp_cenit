@@ -18,17 +18,3 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
-{
-    'name': 'OpenERP Wombat Sale Order',
-    'version': '0.1',
-    'author': 'OpenJAF',
-    'website': 'http://www.openjaf.com',
-    'category': 'Integration',
-    'description': """
-        OpenERP Wombat Sale Order
-    """,
-    'depends': ['oe_wombat_product', 'sale'],
-    'data': ['data/data.xml'],
-    'installable': True
-}

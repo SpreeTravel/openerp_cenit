@@ -3,8 +3,8 @@
 from openerp import models
 
 
-class WombatHandler(models.TransientModel):
-    _name = 'wombat.handler'
+class CenitHandler(models.TransientModel):
+    _name = 'cenit.handler'
 
     def find(self, cr, uid, match, model_obj, params, context=None):
         fp = [x for x in match.line_ids if x.primary]
@@ -43,7 +43,7 @@ class WombatHandler(models.TransientModel):
         return vals
 
     def get_match(self, cr, uid, m_name, context=None):
-        wdt = self.pool.get('wombat.data.type')
+        wdt = self.pool.get('cenit.data.type')
         matching_id = wdt.search(cr, uid, [('name', '=', m_name)], context)
         if matching_id:
             return wdt.browse(cr, uid, matching_id[0], context)
@@ -69,4 +69,17 @@ class WombatHandler(models.TransientModel):
         if obj_id:
             vals = self.process(cr, uid, match, params, context)
             model_obj.write(cr, uid, obj_id, vals, context)
+        return obj_id
+
+    def synch(self, cr, uid, params, m_name, context=None):
+        match = self.get_match(cr, uid, m_name, context)
+        if not match:
+            return False
+        vals = self.process(cr, uid, match, params, context)
+        model_obj = self.pool.get(match.model_id.model)
+        obj_id = self.find(cr, uid, match, model_obj, params, context)
+        if obj_id:
+            model_obj.write(cr, uid, obj_id, vals, context)
+        else:
+            obj_id = model_obj.create(cr, uid, vals, context)
         return obj_id

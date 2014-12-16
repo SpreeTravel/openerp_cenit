@@ -3,15 +3,15 @@
 from openerp import models
 
 
-class WombatSerializer(models.TransientModel):
-    _name = 'wombat.serializer'
+class CenitSerializer(models.TransientModel):
+    _name = 'cenit.serializer'
 
     def find_reference(self, cr, uid, field, obj, context=None):
         return getattr(getattr(obj, field.name), 'name')
 
     def serialize(self, cr, uid, obj, context=None):
         vals = {}
-        wdt = self.pool.get('wombat.data.type')
+        wdt = self.pool.get('cenit.data.type')
         matching_id = wdt.search(cr, uid, [('model_id.model', '=', obj._name)],
                                  context=context)
         if matching_id:

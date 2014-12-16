@@ -1,4 +1,4 @@
-openerp_wombat
+openerp_cenit
 ==============
 
-OpenERP Wombat integration
+OpenERP Cenit integration

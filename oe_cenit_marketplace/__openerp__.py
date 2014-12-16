@@ -20,18 +20,15 @@
 ##############################################################################
 
 {
-    'name': 'OpenERP Wombat Client',
+    'name': 'OpenERP Cenit Marketplace',
     'version': '0.1',
     'author': 'OpenJAF',
     'website': 'http://www.openjaf.com',
     'category': 'Integration',
     'description': """
-        OpenERP Wombat Client
+        OpenERP Cenit Marketplace
     """,
-    'depends': ['base', 'base_action_rule'],
-    'update_xml': [
-        'view/client.xml',
-        'view/data_type.xml'
-    ],
+    'depends': ['oe_cenit_client'],
+    'data': ['data/data.xml'],
     'installable': True
 }
