@@ -22,25 +22,25 @@
 from openerp import models, fields
 
 
-class WombatDataType(models.Model):
-    _name = 'wombat.data.type'
+class CenitDataType(models.Model):
+    _name = 'cenit.data.type'
 
     name = fields.Char('Name', size=128)
     model_id = fields.Many2one('ir.model', 'Model')
-    line_ids = fields.One2many('wombat.data.type.line', 'data_type_id',
+    line_ids = fields.One2many('cenit.data.type.line', 'data_type_id',
                                'Lines')
 
 
-class WombatDataTypeLine(models.Model):
-    _name = 'wombat.data.type.line'
+class CenitDataTypeLine(models.Model):
+    _name = 'cenit.data.type.line'
 
-    data_type_id = fields.Many2one('wombat.data.type', 'Data Type')
+    data_type_id = fields.Many2one('cenit.data.type', 'Data Type')
     name = fields.Char('Name')
     line_type = fields.Selection([('field', 'Field'), ('function', 'Function'),
                                   ('model', 'Model'), ('default', 'Default'),
                                   ('reference', 'Reference')],
                                  'Type', default='field')
-    reference_id = fields.Many2one('wombat.data.type', 'Reference')
+    reference_id = fields.Many2one('cenit.data.type', 'Reference')
     line_cardinality = fields.Selection([('2many', '2many'), ('2one', '2one')],
                                         'Cardinality')
     value = fields.Char('Value')

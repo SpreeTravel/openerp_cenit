@@ -20,15 +20,15 @@
 ##############################################################################
 
 {
-    'name': 'OpenERP Wombat Purchase Order',
+    'name': 'OpenERP Cenit Marketplace',
     'version': '0.1',
     'author': 'OpenJAF',
     'website': 'http://www.openjaf.com',
     'category': 'Integration',
     'description': """
-        OpenERP Wombat Purchase Order
+        OpenERP Cenit Marketplace
     """,
-    'depends': ['oe_wombat_product', 'purchase'],
+    'depends': ['oe_cenit_client'],
     'data': ['data/data.xml'],
     'installable': True
 }

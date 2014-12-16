@@ -3,8 +3,8 @@
 from openerp import models
 
 
-class WombatHandler(models.TransientModel):
-    _name = 'wombat.handler'
+class CenitHandler(models.TransientModel):
+    _name = 'cenit.handler'
 
     def find(self, cr, uid, match, model_obj, params, context=None):
         fp = [x for x in match.line_ids if x.primary]
@@ -43,7 +43,7 @@ class WombatHandler(models.TransientModel):
         return vals
 
     def get_match(self, cr, uid, m_name, context=None):
-        wdt = self.pool.get('wombat.data.type')
+        wdt = self.pool.get('cenit.data.type')
         matching_id = wdt.search(cr, uid, [('name', '=', m_name)], context)
         if matching_id:
             return wdt.browse(cr, uid, matching_id[0], context)

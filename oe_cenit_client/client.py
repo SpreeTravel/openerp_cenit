@@ -24,14 +24,14 @@ import requests
 import simplejson
 
 
-class WombatClient(models.Model):
-    _name = 'wombat.client'
+class CenitClient(models.Model):
+    _name = 'cenit.client'
 
     name = fields.Char('Name', size=128, required=1)
     url = fields.Char('URL', size=255)
     store = fields.Char('Store', size=64)
     token = fields.Char('Token', size=64)
-    push_object_ids = fields.One2many('wombat.push.object', 'client_id',
+    push_object_ids = fields.One2many('cenit.push.object', 'client_id',
                                       'Models')
 
     def push(self, cr, uid, ids, context=None):
@@ -43,10 +43,10 @@ class WombatClient(models.Model):
         return res
 
 
-class WombatPushObject(models.Model):
-    _name = 'wombat.push.object'
+class cenitPushObject(models.Model):
+    _name = 'cenit.push.object'
 
-    client_id = fields.Many2one('wombat.client', 'Client')
+    client_id = fields.Many2one('cenit.client', 'Client')
     root = fields.Char('Root', size=64)
     model_id = fields.Many2one('ir.model', 'Model')
     push_type = fields.Selection([('only_manual', 'Only Manual'),
@@ -61,14 +61,14 @@ class WombatPushObject(models.Model):
     ir_cron_id = fields.Many2one('ir.cron', 'Action Cron')
 
     def create(self, cr, uid, vals, context=None):
-        obj_id = super(WombatPushObject, self).create(cr, uid, vals, context)
+        obj_id = super(cenitPushObject, self).create(cr, uid, vals, context)
         if vals.get('push_type', False):
             obj = self.browse(cr, uid, obj_id)
             self.set_push_type(cr, uid, obj, context)
         return obj_id
 
     def write(self, cr, uid, ids, vals, context=None):
-        res = super(WombatPushObject, self).write(cr, uid, ids, vals, context)
+        res = super(cenitPushObject, self).write(cr, uid, ids, vals, context)
         if vals.get('push_type', False):
             for obj in self.browse(cr, uid, ids):
                 self.set_push_type(cr, uid, obj, context)
@@ -92,7 +92,7 @@ class WombatPushObject(models.Model):
                     'interval_number': 10,
                     'interval_type': 'minutes',
                     'numbercall': -1,
-                    'model': 'wombat.push.object',
+                    'model': 'cenit.push.object',
                     'function': 'push_all',
                     'args': '([%s],)' % str(obj.id)
                 }
@@ -109,7 +109,7 @@ class WombatPushObject(models.Model):
                     'name': 'push_%s' % obj.model_id.model,
                     'model_id': obj.model_id.id,
                     'state': 'code',
-                    'code': "self.pool.get('wombat.push.object').process(cr, uid, obj, {'client_id': %s})" % str(obj.client_id.id)
+                    'code': "self.pool.get('cenit.push.object').process(cr, uid, obj, {'client_id': %s})" % str(obj.client_id.id)
                 }
                 ias_id = ias_obj.create(cr, uid, vals_ias)
                 vals_bar = {
@@ -132,14 +132,14 @@ class WombatPushObject(models.Model):
         push_obj_ids = self.search(cr, uid, domain, context=context)
         if push_obj_ids:
             push_obj = self.browse(cr, uid, push_obj_ids[0])
-            ws = self.pool.get('wombat.serializer')
+            ws = self.pool.get('cenit.serializer')
             data = [ws.serialize(cr, uid, model_obj)]
             return self.push(cr, uid, push_obj, data, context)
         return False
 
     def push_all(self, cr, uid, ids, context=None):
         obj = self.browse(cr, uid, ids[0])
-        ws = self.pool.get('wombat.serializer')
+        ws = self.pool.get('cenit.serializer')
         mo = self.pool.get(obj.model_id.model, False)
         if mo:
             models = []

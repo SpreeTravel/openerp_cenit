@@ -20,15 +20,15 @@
 ##############################################################################
 
 {
-    'name': 'OpenERP Wombat Sale Order',
+    'name': 'OpenERP Cenit Webhook',
     'version': '0.1',
     'author': 'OpenJAF',
     'website': 'http://www.openjaf.com',
     'category': 'Integration',
     'description': """
-        OpenERP Wombat Sale Order
+        OpenERP Cenit Webhook.
     """,
-    'depends': ['oe_wombat_product', 'sale'],
-    'data': ['data/data.xml'],
-    'installable': True
+    'depends': ['web'],
+    'installable': True,
+    'auto_install': True
 }
