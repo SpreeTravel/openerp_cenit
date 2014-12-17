@@ -28,7 +28,8 @@ class CenitDataType(models.Model):
     name = fields.Char('Name', size=128)
     model_id = fields.Many2one('ir.model', 'Model')
     line_ids = fields.One2many('cenit.data.type.line', 'data_type_id',
-                               'Lines')
+                               'Mapping')
+    schema = fields.Text('Schema Reference')
 
 
 class CenitDataTypeLine(models.Model):

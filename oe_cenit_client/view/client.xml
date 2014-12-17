@@ -13,7 +13,7 @@
             <tree string="Clients" >
             	<field name="name"/>
 				<field name="url"/>
-                <field name="store"/>
+                <field name="key"/>
 				<field name="token"/>
 				<button name="push" type="object" string="Push" icon="gtk-go-forward"/>
             </tree>
@@ -32,12 +32,12 @@
 							<field name="url"/>
 						</group>
 						<group>
-							<field name="store"/>
+							<field name="key"/>
 							<field name="token"/>
 						</group>
 					</group>
 					<notebook>
-						<page string="Objects">
+						<page string="Push Objects">
 							<field name="push_object_ids" nolabel="1" >
 								<tree string="Push objects" editable="bottom">
 									<field name="root" />
@@ -45,6 +45,15 @@
 									<field name="push_type" />
 									<field name="push_method" />
 									<button name="push_all" type="object" string="Push" icon="gtk-go-forward"/>
+								</tree>
+							</field>
+						</page>
+						<page string="Pull Objects">
+							<field name="pull_object_ids" nolabel="1" >
+								<tree string="Pull objects" editable="bottom">
+									<field name="root" />
+									<field name="model_id" />
+									<button name="create_configuration_in_cenit" type="object" string="Create in Cenit" icon="terp-stock_effects-object-colorize"/>
 								</tree>
 							</field>
 						</page>

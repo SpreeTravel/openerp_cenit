@@ -29,10 +29,37 @@ class CenitClient(models.Model):
 
     name = fields.Char('Name', size=128, required=1)
     url = fields.Char('URL', size=255)
-    store = fields.Char('Store', size=64)
+    key = fields.Char('Key', size=64)
     token = fields.Char('Token', size=64)
     push_object_ids = fields.One2many('cenit.push.object', 'client_id',
                                       'Models')
+    pull_object_ids = fields.One2many('cenit.pull.object', 'client_id',
+                                      'Models')
+
+    def create(self, cr, uid, vals, context=None):
+        obj_id = super(CenitClient, self).create(cr, uid, vals, context)
+        self.create_connection_in_cenit(cr, uid, [obj_id], context)
+        return obj_id
+
+    def create_connection_in_cenit(self, cr, uid, ids, context=None):
+        obj = self.browse(cr, uid, ids[0])
+        connection_vals = {
+            'name': obj.name + ' ' + cr.dbname,
+            'url': 'http://localhost:8069/cenit',
+            'key': cr.dbname,
+            'authentication_token': cr.dbname
+        }
+        payload = simplejson.dumps({'connection': connection_vals})
+        headers = {
+            'Content-Type': 'application/json',
+            'X-User-Key': obj.key,
+            'X-User-Access-Token': obj.token
+        }
+        url = obj.url + '/setup/connections'
+        r = requests.post(url, data=payload, headers=headers)
+        if r.status_code == 201:
+            return True
+        raise Warning('Error trying to create connection in Cenit !!!')
 
     def push(self, cr, uid, ids, context=None):
         res = []
@@ -43,7 +70,7 @@ class CenitClient(models.Model):
         return res
 
 
-class cenitPushObject(models.Model):
+class CenitPushObject(models.Model):
     _name = 'cenit.push.object'
 
     client_id = fields.Many2one('cenit.client', 'Client')
@@ -61,14 +88,14 @@ class cenitPushObject(models.Model):
     ir_cron_id = fields.Many2one('ir.cron', 'Action Cron')
 
     def create(self, cr, uid, vals, context=None):
-        obj_id = super(cenitPushObject, self).create(cr, uid, vals, context)
+        obj_id = super(CenitPushObject, self).create(cr, uid, vals, context)
         if vals.get('push_type', False):
             obj = self.browse(cr, uid, obj_id)
             self.set_push_type(cr, uid, obj, context)
         return obj_id
 
     def write(self, cr, uid, ids, vals, context=None):
-        res = super(cenitPushObject, self).write(cr, uid, ids, vals, context)
+        res = super(CenitPushObject, self).write(cr, uid, ids, vals, context)
         if vals.get('push_type', False):
             for obj in self.browse(cr, uid, ids):
                 self.set_push_type(cr, uid, obj, context)
@@ -159,5 +186,40 @@ class cenitPushObject(models.Model):
             'X-Hub-Store': obj.client_id.store,
             'X-Hub-Access-Token': obj.client_id.token
         }
-        r = requests.post(obj.client_id.url, data=payload, headers=headers)
+        url = obj.client_id.url + '/cenit'
+        r = requests.post(url, data=payload, headers=headers)
         return r.status_code
+
+
+class CenitPullObject(models.Model):
+    _name = 'cenit.pull.object'
+
+    client_id = fields.Many2one('cenit.client', 'Client')
+    root = fields.Char('Root', size=64)
+    model_id = fields.Many2one('ir.model', 'Model')
+
+    def create_configuration_in_cenit(self, cr, uid, ids, context=None):
+        obj = self.browse(cr, uid, ids[0])
+        wdt = self.pool.get('cenit.data.type')
+        data_ids = wdt.search(cr, uid, [('model_id', '=', obj.model_id.id)])
+        if data_ids:
+            model = wdt.browse(cr, uid, data_ids[0])
+            configuration_vals = {
+                'connection': obj.client_id.name,
+                'library': 'Market',
+                'root': obj.root
+            }
+            if model.schema:
+                schema = model.schema.replace(' ', '').replace('\n', '')
+                configuration_vals.update({'schema': schema})
+            payload = simplejson.dumps(configuration_vals)
+            headers = {
+                'Content-Type': 'application/json',
+                'X-User-Key': obj.client_id.key,
+                'X-User-Access-Token': obj.client_id.token
+            }
+            url = obj.client_id.url + '/setup'
+            r = requests.post(url, data=payload, headers=headers)
+            if r.status_code != 500:
+                return True
+        raise Warning('Error creating configuration in Cenit !!!')

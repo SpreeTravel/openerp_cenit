@@ -24,11 +24,14 @@
 						<field name="model_id"/>
 					</group>
 					<notebook>
-						<page string="Lines">
+						<page string="Schema Reference" >
+							<field name="schema" nolabel="1" colspan="4" />
+						</page>
+						<page string="Mapping">
 							<field name="line_ids" nolabel="1" >
 								<tree string="Lines" editable="bottom">
-									<field name="name" />
-									<field name="value" />
+									<field name="name" string="Odoo" />
+									<field name="value" string="Cenit" />
 									<field name="line_type" />
 									<field name="reference_id" />
 									<field name="line_cardinality" />
