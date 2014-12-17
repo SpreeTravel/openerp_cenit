@@ -183,8 +183,8 @@ class CenitPushObject(models.Model):
         payload = simplejson.dumps({obj.root: data})
         headers = {
             'Content-Type': 'application/json',
-            'X-Hub-Store': obj.client_id.store,
-            'X-Hub-Access-Token': obj.client_id.token
+            'X-Hub-Store': cr.dbname,
+            'X-Hub-Access-Token': cr.dbname
         }
         url = obj.client_id.url + '/cenit'
         r = requests.post(url, data=payload, headers=headers)
@@ -205,7 +205,7 @@ class CenitPullObject(models.Model):
         if data_ids:
             model = wdt.browse(cr, uid, data_ids[0])
             configuration_vals = {
-                'connection': obj.client_id.name,
+                'connection': obj.client_id.name + ' ' + cr.dbname,
                 'library': 'Market',
                 'root': obj.root
             }
