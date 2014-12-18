@@ -180,6 +180,13 @@
 		<record id="data_type_commodity_slug" model="cenit.data.type.line">
             <field name="name">slug</field>
 			<field name="line_type">field</field>
+			<field name="value">slug</field>
+			<field name="data_type_id" ref="data_type_commodity"/>
+        </record>
+		
+		<record id="data_type_commodity_slug_id" model="cenit.data.type.line">
+            <field name="name">slug</field>
+			<field name="line_type">field</field>
 			<field name="value">id</field>
 			<field name="primary" eval="True"/>
 			<field name="data_type_id" ref="data_type_commodity"/>
@@ -200,6 +207,13 @@
         </record>
 		
 		<record id="data_type_variety_slug" model="cenit.data.type.line">
+            <field name="name">slug</field>
+			<field name="line_type">field</field>
+			<field name="value">slug</field>
+			<field name="data_type_id" ref="data_type_variety"/>
+        </record>
+		
+		<record id="data_type_variety_slug_id" model="cenit.data.type.line">
             <field name="name">slug</field>
 			<field name="line_type">field</field>
 			<field name="value">id</field>
@@ -237,6 +251,13 @@
         </record>
 		
 		<record id="data_type_package_slug" model="cenit.data.type.line">
+            <field name="name">slug</field>
+			<field name="line_type">field</field>
+			<field name="value">slug</field>
+			<field name="data_type_id" ref="data_type_package"/>
+        </record>
+		
+		<record id="data_type_package_slug_id" model="cenit.data.type.line">
             <field name="name">slug</field>
 			<field name="line_type">field</field>
 			<field name="value">id</field>

@@ -12,7 +12,7 @@ class WebhookController(http.Controller):
         db = request.httprequest.headers.environ['HTTP_X_HUB_STORE']
         pwd = request.httprequest.headers.environ['HTTP_X_HUB_TOKEN']
         if db in http.db_list():
-            request.session.authenticate(db, 'admin', pwd)
+            request.session.authenticate(db, 'admin', 'admin')
             action, model = path.split('_')
             wh = request.registry.models.get('cenit.handler')
             res = getattr(wh, action)(request.cr, request.uid,

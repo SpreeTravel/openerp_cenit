@@ -198,6 +198,11 @@ class CenitPullObject(models.Model):
     root = fields.Char('Root', size=64)
     model_id = fields.Many2one('ir.model', 'Model')
 
+    def create(self, cr, uid, vals, context=None):
+        obj_id = super(CenitPullObject, self).create(cr, uid, vals, context)
+        self.create_configuration_in_cenit(cr, uid, [obj_id], context)
+        return obj_id
+
     def create_configuration_in_cenit(self, cr, uid, ids, context=None):
         obj = self.browse(cr, uid, ids[0])
         wdt = self.pool.get('cenit.data.type')

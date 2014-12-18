@@ -28,7 +28,7 @@
     'description': """
         OpenERP Cenit Marketplace
     """,
-    'depends': ['oe_cenit_client'],
+    'depends': ['oe_cenit_client', 'market_product'],
     'data': ['data/data.xml'],
     'installable': True
 }
