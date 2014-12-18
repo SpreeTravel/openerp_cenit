@@ -22,6 +22,7 @@
 from openerp import models, fields
 import requests
 import simplejson
+import inflect
 
 
 class CenitClient(models.Model):
@@ -180,7 +181,8 @@ class CenitPushObject(models.Model):
         return getattr(self, obj.push_method)(cr, uid, obj, data)
 
     def push_http_post(self, cr, uid, obj, data, context=None):
-        payload = simplejson.dumps({obj.root: data})
+        p = inflect.engine()
+        payload = simplejson.dumps({p.plural(obj.root): data})
         headers = {
             'Content-Type': 'application/json',
             'X-Hub-Store': cr.dbname,
