@@ -54,11 +54,16 @@ class CenitHandler(models.TransientModel):
         if not match:
             return False
         model_obj = self.pool.get(match.model_id.model)
-        obj_id = self.find(cr, uid, match, model_obj, params, context)
-        if not obj_id:
-            vals = self.process(cr, uid, match, params, context)
-            obj_id = model_obj.create(cr, uid, vals, context)
-        return obj_id
+        if not isinstance(params, list):
+            params = [params]
+        obj_ids = []
+        for p in params:
+            obj_id = self.find(cr, uid, match, model_obj, p, context)
+            if not obj_id:
+                vals = self.process(cr, uid, match, p, context)
+                obj_id = model_obj.create(cr, uid, vals, context)
+            obj_ids.append(obj_id)
+        return obj_ids
 
     def update(self, cr, uid, params, m_name, context=None):
         match = self.get_match(cr, uid, m_name, context)
