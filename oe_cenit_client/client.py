@@ -25,6 +25,8 @@ import simplejson
 import inflect
 
 
+# Testing git
+
 class CenitClient(models.Model):
     _name = 'cenit.client'
 
