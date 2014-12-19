@@ -130,7 +130,10 @@ class ProductTemplate(models.Model):
     def _set_variants(self, cr, uid, oid, name, value, args, context=None):
         context = context or {}
         obj = self.browse(cr, uid, oid)
-        options = {x.attribute_id.name: x for x in obj.attribute_line_ids}
+        options = {}
+        for x in obj.attribute_line_ids:
+            if not x.value_ids:
+                options[x.attribute_id.name] = x
 
         attr_values = {}
         for var in value:
