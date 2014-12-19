@@ -42,6 +42,7 @@ class ProductTemplate(models.Model):
         attr_values = {}
         for var in value:
             for a, v in var['options'].items():
+                v = str(v)
                 attr = pa.search(cr, uid, [('name', '=', a)], context=context)
                 if attr:
                     attr_id = attr[0]
