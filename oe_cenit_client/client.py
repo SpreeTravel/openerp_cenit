@@ -21,6 +21,7 @@
 import requests
 import simplejson
 import inflect
+import netifaces
 from openerp import models, fields
 
 
@@ -45,9 +46,10 @@ class CenitClient(models.Model):
 
     def create_connection_in_cenit(self, cr, uid, ids, context=None):
         obj = self.browse(cr, uid, ids[0])
+        local_IP = netifaces.ifaddresses('eth0')[2][0]['addr']
         connection_vals = {
             'name': obj.name + ' ' + cr.dbname,
-            'url': 'http://localhost:8069/cenit',
+            'url': 'http://%s/cenit' % local_IP,
             'key': cr.dbname,
             'authentication_token': cr.dbname
         }
