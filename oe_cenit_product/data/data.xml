@@ -17,8 +17,8 @@
 			<field name="data_type_id" ref="data_type_product"/>
         </record>
 		
-		<record id="data_type_product_default_code" model="cenit.data.type.line">
-            <field name="name">ean13</field>
+		<record id="data_type_product_default_code_sku" model="cenit.data.type.line">
+            <field name="name">default_code</field>
 			<field name="line_type">field</field>
 			<field name="value">sku</field>
 			<field name="data_type_id" ref="data_type_product"/>
