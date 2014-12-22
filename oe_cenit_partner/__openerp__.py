@@ -20,13 +20,13 @@
 ##############################################################################
 
 {
-    'name': 'OpenERP Cenit Sale Order',
+    'name': 'OpenERP Cenit Partner',
     'version': '0.1',
     'author': 'OpenJAF',
     'website': 'http://www.openjaf.com',
     'category': 'Integration',
     'description': """
-        OpenERP Cenit Sale Order
+        OpenERP Cenit Partner
     """,
     'depends': ['oe_cenit_product'],
     'data': ['data/data.xml'],

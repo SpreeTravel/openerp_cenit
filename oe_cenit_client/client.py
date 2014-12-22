@@ -18,14 +18,11 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
-from openerp import models, fields
 import requests
 import simplejson
 import inflect
+from openerp import models, fields
 
-
-# Testing git
 
 class CenitClient(models.Model):
     _name = 'cenit.client'
@@ -33,13 +30,15 @@ class CenitClient(models.Model):
     name = fields.Char('Name', size=128, required=1)
     url = fields.Char('URL', size=255)
     key = fields.Char('Key', size=64)
-    token = fields.Char('Token', size=64)
+    token = fields.Char('Token', size=128)
+    connection_token = fields.Char('Connection Token', size=128)
     push_object_ids = fields.One2many('cenit.push.object', 'client_id',
                                       'Models')
     pull_object_ids = fields.One2many('cenit.pull.object', 'client_id',
                                       'Models')
 
     def create(self, cr, uid, vals, context=None):
+        vals['connection_token'] = cr.dbname
         obj_id = super(CenitClient, self).create(cr, uid, vals, context)
         self.create_connection_in_cenit(cr, uid, [obj_id], context)
         return obj_id
@@ -61,7 +60,9 @@ class CenitClient(models.Model):
         url = obj.url + '/setup/connections'
         r = requests.post(url, data=payload, headers=headers)
         if r.status_code == 201:
-            return True
+            content = simplejson.loads(r.content)
+            return self.write(cr, uid, obj.id, {'connection_token':
+                                            content['authentication_token']})
         raise Warning('Error trying to create connection in Cenit !!!')
 
     def push(self, cr, uid, ids, context=None):
@@ -188,7 +189,7 @@ class CenitPushObject(models.Model):
         headers = {
             'Content-Type': 'application/json',
             'X-Hub-Store': cr.dbname,
-            'X-Hub-Access-Token': cr.dbname
+            'X-Hub-Access-Token': obj.client_id.connection_token
         }
         url = obj.client_id.url + '/cenit'
         r = requests.post(url, data=payload, headers=headers)

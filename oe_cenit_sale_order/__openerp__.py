@@ -28,7 +28,7 @@
     'description': """
         OpenERP Cenit Sale Order
     """,
-    'depends': ['oe_cenit_product', 'sale'],
+    'depends': ['oe_cenit_product', 'oe_cenit_partner', 'sale'],
     'data': ['data/data.xml'],
     'installable': True
 }
