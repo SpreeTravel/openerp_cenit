@@ -52,6 +52,20 @@
 			<field name="data_type_id" ref="data_type_product"/>
         </record>
 		
+		<record id="data_type_product_create_date" model="cenit.data.type.line">
+            <field name="name">create_date</field>
+			<field name="line_type">field</field>
+			<field name="value">available_on</field>
+			<field name="data_type_id" ref="data_type_product"/>
+        </record>
+		
+		<record id="data_type_product_shipping_category" model="cenit.data.type.line">
+            <field name="name">qty_available_text</field>
+			<field name="line_type">field</field>
+			<field name="value">shipping_category</field>
+			<field name="data_type_id" ref="data_type_product"/>
+        </record>
+		
 		<record id="data_type_product_taxons" model="cenit.data.type.line">
             <field name="name">taxons</field>
 			<field name="line_type">field</field>
@@ -78,6 +92,21 @@
 			<field name="line_type">field</field>
 			<field name="value">variants</field>
 			<field name="data_type_id" ref="data_type_product"/>
+        </record>
+		
+		<!-- Variant -->
+		
+		<record id="data_type_variant" model="cenit.data.type">
+            <field name="name">variant</field>
+			<field name="model_id" model="ir.model" search="[('model', '=', 'product.product')]" />
+        </record>
+		
+		<record id="data_type_variant_name" model="cenit.data.type.line">
+            <field name="name">name</field>
+			<field name="line_type">field</field>
+			<field name="value">id</field>
+			<field name="primary" eval="True"/>
+			<field name="data_type_id" ref="data_type_variant"/>
         </record>
 		
 		<!-- Currency -->
