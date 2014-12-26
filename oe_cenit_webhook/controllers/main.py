@@ -15,7 +15,7 @@ class WebhookController(http.Controller):
             request.session.authenticate(db, 'admin', 'admin')
             action, model = path.split('_')
             wh = request.registry.models.get('cenit.handler')
-            context = {'origin': request.httprequest.url}
+            context = {'sender': 'client'}
             res = getattr(wh, action)(request.cr, request.uid,
                                       request.jsonrequest[model],
                                       model, context)

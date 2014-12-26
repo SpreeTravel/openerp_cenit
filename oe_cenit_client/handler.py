@@ -54,6 +54,7 @@ class CenitHandler(models.TransientModel):
         return False
 
     def add(self, cr, uid, params, m_name, context=None):
+        context = context or {}
         match = self.get_match(cr, uid, m_name, context)
         if not match:
             return False
@@ -65,11 +66,13 @@ class CenitHandler(models.TransientModel):
             obj_id = self.find(cr, uid, match, model_obj, p, context)
             if not obj_id:
                 vals = self.process(cr, uid, match, p, context)
+                vals['sender'] = context.get('sender')
                 obj_id = model_obj.create(cr, uid, vals, context)
             obj_ids.append(obj_id)
         return obj_ids
 
     def update(self, cr, uid, params, m_name, context=None):
+        context = context or {}
         match = self.get_match(cr, uid, m_name, context)
         if not match:
             return False
@@ -81,15 +84,18 @@ class CenitHandler(models.TransientModel):
             obj_id = self.find(cr, uid, match, model_obj, p, context)
             if obj_id:
                 vals = self.process(cr, uid, match, p, context)
+                vals['sender'] = context.get('sender')
                 model_obj.write(cr, uid, obj_id, vals, context)
             obj_ids.append(obj_id)
         return obj_ids
 
     def synch(self, cr, uid, params, m_name, context=None):
+        context = context or {}
         match = self.get_match(cr, uid, m_name, context)
         if not match:
             return False
         vals = self.process(cr, uid, match, params, context)
+        vals['sender'] = context.get('sender')
         model_obj = self.pool.get(match.model_id.model)
         obj_id = self.find(cr, uid, match, model_obj, params, context)
         if obj_id:

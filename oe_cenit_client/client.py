@@ -162,6 +162,8 @@ class CenitPushObject(models.Model):
         return True
 
     def process(self, cr, uid, model_obj, context=None):
+        if model_obj.sender == 'client':
+            return False
         domain = [('model_id.model', '=', model_obj._name)]
         if context.get('client_id', False):
             domain.append(('client_id', '=', context.get('client_id')))

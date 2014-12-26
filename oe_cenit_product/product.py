@@ -2,9 +2,10 @@
 
 from openerp import models
 from openerp.osv import fields
+from openerp.addons.oe_cenit_client import mixin
 
 
-class ProductTemplate(models.Model):
+class ProductTemplate(mixin.CenitMixin, models.Model):
     _name = 'product.template'
     _inherit = 'product.template'
 
@@ -49,7 +50,8 @@ class ProductTemplate(models.Model):
             else:
                 vals = {'name': tx, 'parent_id': current_tx}
                 current_tx = pc.create(cr, uid, vals, context)
-        self.write(cr, uid, oid, {'categ_id': current_tx}, context=context)
+        to_write = {'categ_id': current_tx, 'sender': 'client'}
+        self.write(cr, uid, oid, to_write, context=context)
 
     def _get_taxons(self, cr, uid, ids, name, args, context=None):
         result = dict.fromkeys(ids, False)
@@ -65,30 +67,19 @@ class ProductTemplate(models.Model):
 
     def _set_properties(self, cr, uid, oid, name, value, args, context=None):
         context = context or {}
-        pa = self.pool.get('product.attribute')
-        pav = self.pool.get('product.attribute.value')
         attribute_lines = []
         for a, v in value.items():
             if not v:
                 continue
-            attr = pa.search(cr, uid, [('name', '=', a)], context=context)
-            if attr:
-                attr_id = attr[0]
-            else:
-                attr_id = pa.create(cr, uid, {'name': a})
-            to_search = [('name', '=', v), ('attribute_id', '=', attr_id)]
-            attr_value = pav.search(cr, uid, to_search, context=context)
-            if attr_value:
-                attr_value_id = attr_value[0]
-            else:
-                to_create = {x[0]: x[2] for x in to_search}
-                attr_value_id = pav.create(cr, uid, to_create)
+            attr_id = self._get_attribute(cr, uid, a, context)
+            attr_value_id = self._get_attribute_value(cr, uid, v, attr_id, context)
             attribute_lines.append((0, 0, {
                                         'attribute_id': attr_id,
                                         'value_ids': [(6, 0, [attr_value_id])]
                                     }))
         if attribute_lines:
-            self.write(cr, uid, oid, {'attribute_line_ids': attribute_lines})
+            to_write = {'attribute_line_ids': attribute_lines, 'sender': 'client'}
+            self.write(cr, uid, oid, to_write)
 
     def _get_properties(self, cr, uid, ids, name, args, context=None):
         result = dict.fromkeys(ids, False)
@@ -133,7 +124,8 @@ class ProductTemplate(models.Model):
             attribute_lines.append((0, 0, {'attribute_id': k,
                                            'value_ids': [(6, 0, v)]}))
         if attribute_lines:
-            self.write(cr, uid, oid, {'attribute_line_ids': attribute_lines})
+            to_write = {'attribute_line_ids': attribute_lines, 'sender': 'client'}
+            self.write(cr, uid, oid, to_write)
 
         obj = self.browse(cr, uid, oid)
         for variant in obj.product_variant_ids:
