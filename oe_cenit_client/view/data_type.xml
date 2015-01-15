@@ -24,9 +24,6 @@
 						<field name="model_id"/>
 					</group>
 					<notebook>
-						<page string="Schema Reference" >
-							<field name="schema" nolabel="1" colspan="4" />
-						</page>
 						<page string="Mapping">
 							<field name="line_ids" nolabel="1" >
 								<tree string="Lines" editable="bottom">
@@ -38,6 +35,9 @@
 									<field name="primary" />
 								</tree>
 							</field>
+						</page>
+						<page string="Schema Reference" >
+							<field name="schema" nolabel="1" colspan="4" />
 						</page>
 					</notebook>
 				</sheet>
@@ -53,7 +53,7 @@
         <field name="view_id" ref="cenit_data_type_view_tree"/>
     </record>
 	
-	<menuitem id="cenit_data_type_menu" sequence="2" parent="integration" action="cenit_data_type_action"/>
+	<menuitem id="cenit_data_type_menu" sequence="3" parent="cenit" action="cenit_data_type_action"/>
 
   </data>
 </openerp>

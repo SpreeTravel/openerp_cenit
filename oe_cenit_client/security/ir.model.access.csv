@@ -1,7 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_cenit_client_system,cenit.client.system,model_cenit_client,base.group_system,1,1,1,1
-access_cenit_push_object_system,cenit.push.object.system,model_cenit_push_object,base.group_system,1,1,1,1
-access_cenit_pull_object_system,cenit.pull.object.system,model_cenit_pull_object,base.group_system,1,1,1,1
+access_cenit_flow_system,cenit.flow.system,model_cenit_flow,base.group_system,1,1,1,1
 access_cenit_data_type_system,cenit.data.type.system,model_cenit_data_type,base.group_system,1,1,1,1
 access_cenit_data_type_line_system,cenit.data.type.line.system,model_cenit_data_type_line,base.group_system,1,1,1,1
 access_cenit_handler_system,cenit.handler.system,model_cenit_handler,base.group_system,1,1,1,1
