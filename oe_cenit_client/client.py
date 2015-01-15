@@ -20,8 +20,8 @@
 ##############################################################################
 import requests
 import simplejson
-import netifaces
 from openerp import models, fields
+from openerp.tools import config
 
 
 class CenitClient(models.Model):
@@ -54,7 +54,7 @@ class CenitClient(models.Model):
         cname = obj.name + ' ' + cr.dbname
         cparams = {'connection': {
             'name': cname,
-            'url': 'http://%s/cenit' % self.local_ip(),
+            'url': 'http://%s/cenit' % self.local_url(),
             'key': cr.dbname,
             #'connection_roles_attributes': [role['id']['$oid']]
         }}
@@ -110,8 +110,5 @@ class CenitClient(models.Model):
             return client.browse(cr, uid, client_ids[0])
         return False
 
-    def local_ip(self):
-        try:
-            return netifaces.ifaddresses('eth0')[2][0]['addr']
-        except:
-            return 'localhost:8069'
+    def local_url(self):
+        return config.get('local_url', 'http://localhost:8069')
