@@ -5,7 +5,7 @@
 		<!-- Purchase Order -->
         
         <record id="data_type_purchase_order" model="cenit.data.type">
-            <field name="name">purchase</field>
+            <field name="name">order</field>
 			<field name="model_id" model="ir.model" search="[('model', '=', 'purchase.order')]" />
         </record>
 		
@@ -49,18 +49,16 @@
 		<record id="data_type_purchase_order_partner" model="cenit.data.type.line">
             <field name="name">partner_id</field>
 			<field name="line_type">model</field>
-			<field name="value">billing_address</field>
+			<field name="value">supplier_address</field>
 			<field name="line_cardinality">2one</field>
 			<field name="reference_id" ref="oe_cenit_partner.data_type_res_partner" />
 			<field name="data_type_id" ref="data_type_purchase_order"/>
         </record>
 		
-		<record id="data_type_purchase_order_customer" model="cenit.data.type.line">
-            <field name="name">customer_id</field>
-			<field name="line_type">model</field>
-			<field name="value">customer_address</field>
-			<field name="line_cardinality">2one</field>
-			<field name="reference_id" ref="oe_cenit_partner.data_type_res_partner" />
+		<record id="data_type_purchase_order_billing_address" model="cenit.data.type.line">
+            <field name="name">billing_address</field>
+			<field name="line_type">field</field>
+			<field name="value">billing_address</field>
 			<field name="data_type_id" ref="data_type_purchase_order"/>
         </record>
 		

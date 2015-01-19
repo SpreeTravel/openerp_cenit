@@ -144,7 +144,8 @@ class CenitFlow(models.Model):
             model_ids = mo.search(cr, uid, [], context=context)
             for x in mo.browse(cr, uid, model_ids, context):
                 models.append(ws.serialize(cr, uid, x))
-            return self.process(cr, uid, obj, models, context)
+            if models:
+                return self.process(cr, uid, obj, models, context)
         return False
 
     def process(self, cr, uid, obj, data, context=None):

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import openerp
 from openerp import models
 from openerp.osv import fields
 from openerp.addons.oe_cenit_client import mixin
@@ -20,6 +21,30 @@ class SaleOrder(mixin.CenitMixin, models.Model):
         new_vals['price_unit'] = vals['price']
         new_vals['product_uom_qty'] = vals['quantity']
         return new_vals
+
+    def _set_company(self, cr, uid, oid, name, value, args, context=None):
+        company = self.pool.get('res.company')
+        company_ids = company.search(cr, uid, [('name', '=', value['firstname'])], context=context)
+        if not company_ids:
+            # This order is not for this company
+            raise openerp.exceptions.AccessDenied()
+        return True
+
+    def _get_company(self, cr, uid, ids, name, args, context=None):
+        result = dict.fromkeys(ids, False)
+        for obj in self.browse(cr, uid, ids, context=context):
+            partner = obj.company_id.partner_id
+            var = {}
+            var['firstname'] = partner.name
+            var['address1'] = partner.street
+            var['address2'] = partner.street2
+            var['city'] = partner.city
+            var['state'] = partner.state_id and partner.state_id.name or False
+            var['country'] = partner.country_id and partner.country_id.name or False
+            var['phone'] = partner.phone
+            var['zipcode'] = partner.zip
+            result[obj.id] = var
+        return result
 
     def _set_lines(self, cr, uid, oid, name, value, args, context=None):
         sale_line = self.pool.get('sale.order.line')
@@ -59,8 +84,11 @@ class SaleOrder(mixin.CenitMixin, models.Model):
         return dict.fromkeys(ids, '')
 
     _columns = {
+        'supplier_address': fields.function(_get_company, method=True,
+                                            type='char', fnct_inv=_set_company,
+                                            priority=1),
         'line_items': fields.function(_get_lines, method=True, type='char',
-                                      fnct_inv=_set_lines, priority=1),
+                                      fnct_inv=_set_lines, priority=2),
         'totals': fields.function(_get_totals, method=True, type='char',
-                                  fnct_inv=_set_totals, priority=2),
+                                  fnct_inv=_set_totals, priority=3),
     }

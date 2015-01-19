@@ -11,6 +11,21 @@ class ProductTemplate(mixin.CenitMixin, models.Model):
 
     _options = []
 
+    def create(self, cr, uid, vals, context=None):
+        if not vals.get('sku', False):
+            vals['sku'] = self.build_sku(vals.get('name', ''))
+        return super(ProductTemplate, self).create(cr, uid, vals, context)
+
+    def build_sku(self, name):
+        bad_char = ['á', 'é', 'í', 'ó', 'ú', 'ñ', 'Á', 'É', 'Í', 'Ó', 'Ú', 'Ñ', '(', ')']
+        sku = ''
+        for n in name:
+            if n == ' ':
+                sku += '-'
+            elif n not in bad_char:
+                sku += n
+        return sku
+    
     def _match_variant(self, cr, uid, value_ids, params, context=None):
         for p in params:
             if p.get('options', False) and (set(value_ids)).issubset(set(p['options'].values())):
@@ -163,6 +178,7 @@ class ProductTemplate(mixin.CenitMixin, models.Model):
         return result
 
     _columns = {
+        'sku': fields.char('SKU', size=128),
         'taxons': fields.function(_get_taxons, method=True, type='char',
                                   fnct_inv=_set_taxons, priority=1),
         'properties': fields.function(_get_properties, method=True,

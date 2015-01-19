@@ -19,7 +19,7 @@ class CenitHandler(models.TransientModel):
     def find_reference(self, cr, uid, field, params, context=None):
         if field.reference_id:
             model_obj = self.pool.get(field.reference_id.model_id.model)
-            to_search = [('name', '=', params[field.value])]
+            to_search = [('name', '=', params.get(field.value, False))]
             obj_ids = model_obj.search(cr, uid, to_search, context=context)
             return obj_ids and obj_ids[0] or False
         return False
@@ -48,9 +48,9 @@ class CenitHandler(models.TransientModel):
 
     def get_match(self, cr, uid, m_name, context=None):
         wdt = self.pool.get('cenit.data.type')
-        matching_id = wdt.search(cr, uid, [('name', '=', m_name)])
-        if matching_id:
-            return wdt.browse(cr, uid, matching_id[0], context)
+        matching_ids = wdt.search(cr, uid, [('name', '=', m_name)])
+        if matching_ids:
+            return wdt.browse(cr, uid, matching_ids[0], context)
         return False
 
     def add(self, cr, uid, params, m_name, context=None):

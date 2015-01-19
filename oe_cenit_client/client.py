@@ -28,7 +28,7 @@ class CenitClient(models.Model):
     _name = 'cenit.client'
 
     name = fields.Char('Connection Name', size=128, required=1)
-    role = fields.Char('Connection Role Name', size=128, required=1)
+    role = fields.Char('Connection Role Name', size=128)
     connection_token = fields.Char('Connection Token', size=128)
     connection_ref = fields.Char('Connection Ref', size=128)
     connection_role_ref = fields.Char('Connection Role Ref', size=128)
@@ -49,12 +49,12 @@ class CenitClient(models.Model):
 
     def set_connection_in_cenit(self, cr, uid, ids, context=None):
         obj = self.browse(cr, uid, ids[0])
-        rparams = {'connection_role': {'name': obj.role}}
+        rparams = {'connection_role': {'name': obj.role or 'Master'}}
         role = self.post(cr, uid, '/setup/connection_roles', rparams)
         cname = obj.name + ' ' + cr.dbname
         cparams = {'connection': {
             'name': cname,
-            'url': 'http://%s/cenit' % self.local_url(),
+            'url': '%s/cenit' % self.local_url(),
             'key': cr.dbname,
             #'connection_roles_attributes': [role['id']['$oid']]
         }}

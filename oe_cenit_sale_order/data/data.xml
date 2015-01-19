@@ -55,12 +55,10 @@
 			<field name="data_type_id" ref="data_type_sale_order"/>
         </record>
 		
-		<record id="data_type_sale_order_supplier" model="cenit.data.type.line">
-            <field name="name">supplier_id</field>
-			<field name="line_type">model</field>
+		<record id="data_type_sale_order_supplier_address" model="cenit.data.type.line">
+            <field name="name">supplier_address</field>
+			<field name="line_type">field</field>
 			<field name="value">supplier_address</field>
-			<field name="line_cardinality">2one</field>
-			<field name="reference_id" ref="oe_cenit_partner.data_type_res_partner" />
 			<field name="data_type_id" ref="data_type_sale_order"/>
         </record>
 		
