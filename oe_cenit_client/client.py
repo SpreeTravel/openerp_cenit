@@ -49,56 +49,57 @@ class CenitClient(models.Model):
 
     def set_connection_in_cenit(self, cr, uid, ids, context=None):
         obj = self.browse(cr, uid, ids[0])
-        rparams = {'connection_role': {'name': obj.role or 'Master'}}
-        role = self.post(cr, uid, '/setup/connection_roles', rparams)
+        role_id = self.get_role(cr, uid, obj, context)
         cname = obj.name + ' ' + cr.dbname
         cparams = {'connection': {
             'name': cname,
             'url': '%s/cenit' % self.local_url(),
             'key': cr.dbname,
-            'connection_roles': [{'id': role['id']['$oid']}]
+            'connection_roles_attributes': [{'name': 'Master'}]
         }}
         connection = self.post(cr, uid, '/setup/connections', cparams)
         update = {
-            'connection_token': connection['authentication_token'],
-            'connection_ref': connection['id']['$oid'],
-            'connection_role_ref': role['id']['$oid']
+            'connection_token': connection['token'],
+            'connection_ref': connection['id'],
+            'connection_role_ref': role_id
         }
         return self.write(cr, uid, obj.id, update)
 
+    def get_role(self, cr, uid, obj, context=None):
+        name = obj.role or 'Master'
+        for element in self.get(cr, uid, '/setup/connection_roles'):
+            if element['name'] == name:
+                return element['id']
+        params = {'connection_role': {'name': name}}
+        role = self.post(cr, uid, '/setup/connection_roles', params)
+        return role['id']
+
     def post(self, cr, uid, path, vals, context=None):
         config = self.instance(cr, uid, context)
-        headers = {
-            'Content-Type': 'application/json',
-            'X-User-Key': config.key,
-            'X-User-Access-Token': config.token
-        }
         payload = simplejson.dumps(vals)
-        r = requests.post(config.url + path, data=payload, headers=headers)
+        r = requests.post(config.url + path, data=payload, headers=self.headers(config))
         if r.status_code == 201:
             return simplejson.loads(r.content)
         raise Warning('Error trying to configure Cenit.')
 
+    def put(self, cr, uid, path, vals, context=None):
+        config = self.instance(cr, uid, context)
+        payload = simplejson.dumps(vals)
+        r = requests.put(config.url + path, data=payload, headers=self.headers(config))
+        if r.status_code == 204:
+            return True
+        raise Warning('Error trying to configure Cenit.')
+
     def get(self, cr, uid, path, context=None):
         config = self.instance(cr, uid, context)
-        headers = {
-            'Content-Type': 'application/json',
-            'X-User-Key': config.key,
-            'X-User-Access-Token': config.token
-        }
-        r = requests.get(config.url + path, headers=headers)
+        r = requests.get(config.url + path, headers=self.headers(config))
         if r.status_code == 200:
             return simplejson.loads(r.content)
         raise Warning('Error getting data from Cenit.')
 
     def delete(self, cr, uid, path, context=None):
         config = self.instance(cr, uid, context)
-        headers = {
-            'Content-Type': 'application/json',
-            'X-User-Key': config.key,
-            'X-User-Access-Token': config.token
-        }
-        r = requests.delete(config.url + path, headers=headers)
+        r = requests.delete(config.url + path, headers=self.headers(config))
         if r.status_code == 204:
             return True
         raise Warning('Error removing data in Cenit.')
@@ -109,6 +110,13 @@ class CenitClient(models.Model):
         if client_ids:
             return client.browse(cr, uid, client_ids[0])
         return False
+
+    def headers(self, config):
+        return {
+            'Content-Type': 'application/json',
+            'X-User-Key': config.key,
+            'X-User-Access-Token': config.token
+        }
 
     def local_url(self):
         return config.get('local_url', 'http://localhost:8069')

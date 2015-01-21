@@ -14,7 +14,8 @@
 				<field name="execution" />
 				<button name="process_all" type="object" string="Process" icon="gtk-go-forward" attrs="{'invisible': [('purpose', '=', 'receive')]}"/>
 				<button name="set_send_execution" type="object" string="Set Send Execution" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('purpose', '=', 'receive')]}"/>
-				<button name="set_receive_execution" type="object" string="Set Receive Execution" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('purpose', '=', 'send')]}"/>
+				<button name="set_receive_execution" type="object" string="Set Reference" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('purpose', '=', 'send')]}"/>
+				<button name="clean_reference" type="object" string="Clean Reference" icon="gtk-clear" attrs="{'invisible': [('purpose', '=', 'send')]}"/>
             </tree>
         </field>
     </record>

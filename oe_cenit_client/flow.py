@@ -119,9 +119,20 @@ class CenitFlow(models.Model):
         return True
 
     def set_receive_execution(self, cr, uid, ids, context=None):
-        obj = self.browse(cr, uid, ids[0])
-        #flow_reference = self.pool.get('cenit.flow.reference')
-        #return flow_reference.set_flow_in_cenit(cr, uid, obj, context)
+        obj = self.pool.get('cenit.flow').browse(cr, uid, ids[0])
+        flow_reference = self.pool.get('cenit.flow.reference')
+        return flow_reference.set_flow_in_cenit(cr, uid, obj, context)
+
+    def clean_reference(self, cr, uid, ids, context=None):
+        ref = self.pool.get('cenit.flow.reference')
+        ref_id = ref.search(cr, uid, [('flow_id', 'in', ids)], context=context)
+        if ref_id:
+            try:
+                ref.unlink(cr, uid, ref_id)
+            except:
+                cr.execute('delete from cenit_flow_reference where id = %s',
+                           (ref_id[0],))
+        return True
 
     def execute(self, cr, uid, model_obj, context=None):
         if model_obj.sender == 'client':
@@ -188,7 +199,7 @@ class CenitFlowReference(models.Model):
         if not ref_id:
             ref['flow_id'] = flow.id
             ref['role_ref'] = self.get_role(cr, uid, context)
-            ref['webhook_ref'] = self.post_webhook(cr, uid, flow, context)
+            ref['webhook_ref'] = self.get_webhook(cr, uid, flow, context)
             ref['data_type_ref'] = self.get_data_type(cr, uid, flow, context)
             ref['event_ref'] = self.get_event(cr, uid, flow, context)
             vals = {
@@ -200,7 +211,7 @@ class CenitFlowReference(models.Model):
                 'event_id': ref['event_ref']
             }
             response = client.post(cr, uid, '/setup/flows', {'flow': vals})
-            ref.update({'flow_ref': response['id']['$oid']})
+            ref.update({'flow_ref': response['id']})
             self.create(cr, uid, ref)
         return True
 
@@ -213,7 +224,7 @@ class CenitFlowReference(models.Model):
         data_type_name = flow.root.capitalize()
         for element in client.get(cr, uid, '/setup/data_types'):
             if element['name'] == data_type_name:
-                return element['id']['$oid']
+                return element['id']
         return False
 
     def get_event(self, cr, uid, flow, context=None):
@@ -224,14 +235,16 @@ class CenitFlowReference(models.Model):
         event_name = '%s on %s' % (flow.root, event)
         for element in client.get(cr, uid, '/setup/events'):
             if element['name'] == event_name:
-                return element['id']['$oid']
+                return element['id']
         return False
 
-    def post_webhook(self, cr, uid, flow, context=None):
-        vals = {
-            'name': flow.name,
-            'path': 'add_%s' % flow.root.lower(),
-        }
+    def get_webhook(self, cr, uid, flow, context=None):
         client = self.pool.get('cenit.client')
+        name = flow.name
+        path = 'add_%s' % flow.root.lower()
+        for element in client.get(cr, uid, '/setup/webhooks'):
+            if element['name'] == name and element['path'] == path:
+                return element['id']
+        vals = {'name': name, 'path': path}
         response = client.post(cr, uid, '/setup/webhooks', {'webhook': vals})
-        return response['id']['$oid']
+        return response['id']
