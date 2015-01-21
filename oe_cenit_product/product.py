@@ -13,19 +13,9 @@ class ProductTemplate(mixin.CenitMixin, models.Model):
 
     def create(self, cr, uid, vals, context=None):
         if not vals.get('sku', False):
-            vals['sku'] = self.build_sku(vals.get('name', ''))
+            vals['sku'] = vals.get('name', '').lower().replace(' ', '-')
         return super(ProductTemplate, self).create(cr, uid, vals, context)
 
-    def build_sku(self, name):
-        bad_char = ['á', 'é', 'í', 'ó', 'ú', 'ñ', 'Á', 'É', 'Í', 'Ó', 'Ú', 'Ñ', '(', ')']
-        sku = ''
-        for n in name:
-            if n == ' ':
-                sku += '-'
-            elif n not in bad_char:
-                sku += n
-        return sku
-    
     def _match_variant(self, cr, uid, value_ids, params, context=None):
         for p in params:
             if p.get('options', False) and (set(value_ids)).issubset(set(p['options'].values())):
@@ -122,39 +112,21 @@ class ProductTemplate(mixin.CenitMixin, models.Model):
         return result
 
     def _set_variants(self, cr, uid, oid, name, value, args, context=None):
+        variant = self.pool.get('product.product')
         context = context or {}
-        attr_values = {}
         for var in value:
+            vals = {}
             for a, v in var['options'].items():
-                if a in self._options:
+                a_attr = a.lower()
+                # if a in self._options
+                if a_attr in variant._columns:
                     attr_id = self._get_attribute(cr, uid, a, context)
-                    if attr_id not in attr_values:
-                        attr_values[attr_id] = []
-                    v = str(v)
-                    attr_value_id = self._get_attribute_value(cr, uid, v, attr_id, context)
-                    if attr_value_id not in attr_values[attr_id]:
-                        attr_values[attr_id].append(attr_value_id)
-        attribute_lines = []
-        for k, v in attr_values.items():
-            attribute_lines.append((0, 0, {'attribute_id': k,
-                                           'value_ids': [(6, 0, v)]}))
-        if attribute_lines:
-            to_write = {'attribute_line_ids': attribute_lines, 'sender': 'client'}
-            self.write(cr, uid, oid, to_write)
-
-        obj = self.browse(cr, uid, oid)
-        for variant in obj.product_variant_ids:
-            value_names = [x.name for x in variant.attribute_value_ids]
-            var = self._match_variant(cr, uid, value_names, value, context)
-            if var:
-                attr_value_ids = []
-                for a, v in var.items():
-                    v = str(v)
-                    if v not in value_names:
-                        attr_id = self._get_attribute(cr, uid, a, context)
-                        attr_value_id = self._get_attribute_value(cr, uid, v, attr_id, context)
-                        attr_value_ids.append(attr_value_id)
-                # TODO: update variants
+                    attr_value_id = self._get_attribute_value(cr, uid, str(v), attr_id, context)
+                    vals[a_attr] = attr_value_id
+            vals['default_code'] = var['sku']
+            vals['product_tmpl_id'] = oid
+            ctx = dict(context or {}, create_product_variant=True)
+            variant.create(cr, uid, vals, ctx)
         return True
 
     def _get_variants(self, cr, uid, ids, name, args, context=None):

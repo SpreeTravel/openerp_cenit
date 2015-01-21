@@ -120,8 +120,8 @@ class CenitFlow(models.Model):
 
     def set_receive_execution(self, cr, uid, ids, context=None):
         obj = self.browse(cr, uid, ids[0])
-        flow_reference = self.pool.get('cenit.flow.reference')
-        return flow_reference.set_flow_in_cenit(cr, uid, obj, context)
+        #flow_reference = self.pool.get('cenit.flow.reference')
+        #return flow_reference.set_flow_in_cenit(cr, uid, obj, context)
 
     def execute(self, cr, uid, model_obj, context=None):
         if model_obj.sender == 'client':

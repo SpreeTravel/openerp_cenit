@@ -56,7 +56,7 @@ class CenitClient(models.Model):
             'name': cname,
             'url': '%s/cenit' % self.local_url(),
             'key': cr.dbname,
-            #'connection_roles_attributes': [role['id']['$oid']]
+            'connection_roles': [{'id': role['id']['$oid']}]
         }}
         connection = self.post(cr, uid, '/setup/connections', cparams)
         update = {
