@@ -94,6 +94,13 @@
 			<field name="data_type_id" ref="data_type_product"/>
         </record>
 		
+		<record id="data_type_product_suppliers" model="cenit.data.type.line">
+            <field name="name">suppliers</field>
+			<field name="line_type">field</field>
+			<field name="value">suppliers</field>
+			<field name="data_type_id" ref="data_type_product"/>
+        </record>
+		
 		<!-- Variant -->
 		
 		<record id="data_type_variant" model="cenit.data.type">

@@ -149,6 +149,23 @@ class ProductTemplate(mixin.CenitMixin, models.Model):
             result[obj.id] = variants
         return result
 
+    def _set_suppliers(self, cr, uid, oid, name, value, args, context=None):
+        partner = self.pool.get('res.partner')
+        sellers = []
+        for var in value:
+            domain = [('name', '=', var['firstname'])]
+            pid = partner.search(cr, uid, domain)
+            if not pid:
+                pid = partner.create(cr, uid, {x[0]: x[2] for x in domain})
+                sellers.append((0, 0, {'name': pid}))
+        self.write(cr, uid, oid, {'seller_ids': sellers})
+
+    def _get_suppliers(self, cr, uid, ids, name, args, context=None):
+        result = dict.fromkeys(ids, False)
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = [{'firstname': si.name.name} for si in obj.seller_ids if si.name]
+        return result
+
     _columns = {
         'sku': fields.char('SKU', size=128),
         'taxons': fields.function(_get_taxons, method=True, type='char',
@@ -159,5 +176,7 @@ class ProductTemplate(mixin.CenitMixin, models.Model):
         'options': fields.function(_get_options, method=True, type='char',
                                    fnct_inv=_set_options, priority=3),
         'variants': fields.function(_get_variants, method=True, type='char',
-                                    fnct_inv=_set_variants, priority=4)
+                                    fnct_inv=_set_variants, priority=4),
+        'suppliers': fields.function(_get_suppliers, method=True, type='char',
+                                    fnct_inv=_set_suppliers, priority=4),
     }
