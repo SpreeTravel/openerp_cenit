@@ -28,7 +28,8 @@ class CenitHandler(models.TransientModel):
         vals = {}
         for field in match.line_ids:
             if field.line_type == 'field':
-                vals[field.name] = params.get(field.value, False)
+                if params.get(field.value, False):
+                    vals[field.name] = params[field.value]
             elif field.line_type == 'model':
                 if field.line_cardinality == '2many':
                     vals[field.name] = []
@@ -94,12 +95,18 @@ class CenitHandler(models.TransientModel):
         match = self.get_match(cr, uid, m_name, context)
         if not match:
             return False
-        vals = self.process(cr, uid, match, params, context)
-        vals['sender'] = context.get('sender')
         model_obj = self.pool.get(match.model_id.model)
-        obj_id = self.find(cr, uid, match, model_obj, params, context)
-        if obj_id:
-            model_obj.write(cr, uid, obj_id, vals, context)
-        else:
-            obj_id = model_obj.create(cr, uid, vals, context)
-        return obj_id
+        if not isinstance(params, list):
+            params = [params]
+        obj_ids = []
+        for p in params:
+            vals = self.process(cr, uid, match, p, context)
+            vals['sender'] = context.get('sender')
+            model_obj = self.pool.get(match.model_id.model)
+            obj_id = self.find(cr, uid, match, model_obj, p, context)
+            if obj_id:
+                model_obj.write(cr, uid, obj_id, vals, context)
+            else:
+                obj_id = model_obj.create(cr, uid, vals, context)
+            obj_ids.append(obj_id)
+        return obj_ids

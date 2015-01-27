@@ -56,6 +56,12 @@
                                     <field name="role" />
                                 </div>
                             </div>
+							<label for="connection_key"/>
+                            <div name="connection_key">
+                                <div class="oe_inline">
+                                    <field name="connection_key" />
+                                </div>
+                            </div>
                             <label for="connection_token"/>
                             <div name="connection_token">
                                 <div class="oe_inline">

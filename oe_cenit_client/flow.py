@@ -22,6 +22,7 @@ import requests
 import simplejson
 import inflect
 from openerp import models, fields
+from openerp.addons.oe_saas_utils import connector
 
 
 class CenitFlow(models.Model):
@@ -38,7 +39,8 @@ class CenitFlow(models.Model):
                                   ('on_write', 'On Update'),
                                   ('on_create_or_write', 'On Create & Update')
                                   ], 'Execution', default='only_manual')
-    method = fields.Selection([('http_post', 'HTTP POST')], 'Method',
+    method = fields.Selection([('http_post', 'HTTP POST'),
+                               ('local_post', 'LOCAL POST')], 'Method',
                               default='http_post')
 
     base_action_rule_id = fields.Many2one('base.action.rule', 'Action Rule')
@@ -75,7 +77,7 @@ class CenitFlow(models.Model):
             if obj.base_action_rule_id:
                 bar_obj.unlink(cr, uid, obj.base_action_rule_id.id)
             elif obj.ir_cron_id:
-                ic_obj.unlink(cr, uid, obj.ir_cron_id.id)
+                ic_obj.unlink(cr, uid, [obj.ir_cron_id.id])
         elif obj.execution == 'interval':
             if obj.ir_cron_id:
                 pass
@@ -120,8 +122,9 @@ class CenitFlow(models.Model):
 
     def set_receive_execution(self, cr, uid, ids, context=None):
         obj = self.pool.get('cenit.flow').browse(cr, uid, ids[0])
-        flow_reference = self.pool.get('cenit.flow.reference')
-        return flow_reference.set_flow_in_cenit(cr, uid, obj, context)
+        if obj.method == 'http_post':
+            flow_reference = self.pool.get('cenit.flow.reference')
+            return flow_reference.set_flow_in_cenit(cr, uid, obj, context)
 
     def clean_reference(self, cr, uid, ids, context=None):
         ref = self.pool.get('cenit.flow.reference')
@@ -137,7 +140,8 @@ class CenitFlow(models.Model):
     def execute(self, cr, uid, model_obj, context=None):
         if model_obj.sender == 'client':
             return False
-        domain = [('model_id.model', '=', model_obj._name)]
+        domain = [('model_id.model', '=', model_obj._name),
+                  ('purpose', '=', 'send')]
         flow_obj_ids = self.search(cr, uid, domain, context=context)
         if flow_obj_ids:
             flow_obj = self.browse(cr, uid, flow_obj_ids[0])
@@ -160,7 +164,7 @@ class CenitFlow(models.Model):
         return False
 
     def process(self, cr, uid, obj, data, context=None):
-        return getattr(self, obj.method)(cr, uid, obj, data)
+        return getattr(self, obj.method)(cr, uid, obj, data, context)
 
     def http_post(self, cr, uid, obj, data, context=None):
         client = self.pool.get('cenit.client').instance(cr, uid, context)
@@ -168,12 +172,19 @@ class CenitFlow(models.Model):
         payload = simplejson.dumps({p.plural(obj.root.lower()): data})
         headers = {
             'Content-Type': 'application/json',
-            'X-Hub-Store': cr.dbname,
+            'X-Hub-Store': client.connection_key,
             'X-Hub-Access-Token': client.connection_token
         }
         url = client.url + '/cenit'
         r = requests.post(url, data=payload, headers=headers)
         return r.status_code
+
+    def local_post(self, cr, uid, obj, data, context=None):
+        db = context.get('partner_db')
+        if db:
+            return connector.call(db, 'cenit.handler', 'synch', data,
+                                  obj.root.lower())
+        return False
 
 
 class CenitFlowReference(models.Model):

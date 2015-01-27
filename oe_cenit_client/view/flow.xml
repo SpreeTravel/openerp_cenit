@@ -34,6 +34,7 @@
 					<group>
 						<field name="purpose"/>
 						<field name="execution"/>
+						<field name="method"/>
 					</group>
 				</sheet>
             </form>

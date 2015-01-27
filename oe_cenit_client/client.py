@@ -29,6 +29,8 @@ class CenitClient(models.Model):
 
     name = fields.Char('Connection Name', size=128, required=1)
     role = fields.Char('Connection Role Name', size=128)
+
+    connection_key = fields.Char('Connection Key', size=128)
     connection_token = fields.Char('Connection Token', size=128)
     connection_ref = fields.Char('Connection Ref', size=128)
     connection_role_ref = fields.Char('Connection Role Ref', size=128)
@@ -49,24 +51,25 @@ class CenitClient(models.Model):
 
     def set_connection_in_cenit(self, cr, uid, ids, context=None):
         obj = self.browse(cr, uid, ids[0])
-        role_id = self.get_role(cr, uid, obj, context)
+        role_name = obj.role or 'Master'
+        role_id = self.get_role(cr, uid, role_name, context)
         cname = obj.name + ' ' + cr.dbname
         cparams = {'connection': {
             'name': cname,
             'url': '%s/cenit' % self.local_url(),
             'key': cr.dbname,
-            'connection_roles_attributes': [{'name': 'Master'}]
+            'connection_roles_attributes': [role_id]
         }}
         connection = self.post(cr, uid, '/setup/connections', cparams)
         update = {
+            'connection_key': connection['key'],
             'connection_token': connection['token'],
             'connection_ref': connection['id'],
             'connection_role_ref': role_id
         }
         return self.write(cr, uid, obj.id, update)
 
-    def get_role(self, cr, uid, obj, context=None):
-        name = obj.role or 'Master'
+    def get_role(self, cr, uid, name, context=None):
         for element in self.get(cr, uid, '/setup/connection_roles'):
             if element['name'] == name:
                 return element['id']
