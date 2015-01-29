@@ -121,10 +121,13 @@ class CenitFlow(models.Model):
         return True
 
     def set_receive_execution(self, cr, uid, ids, context=None):
-        obj = self.pool.get('cenit.flow').browse(cr, uid, ids[0])
-        if obj.method == 'http_post':
-            flow_reference = self.pool.get('cenit.flow.reference')
-            return flow_reference.set_flow_in_cenit(cr, uid, obj, context)
+        for obj in self.browse(cr, uid, ids):
+            if obj.method == 'http_post':
+                flow_reference = self.pool.get('cenit.flow.reference')
+                try:
+                    flow_reference.set_flow_in_cenit(cr, uid, obj, context)
+                except:
+                    pass
 
     def clean_reference(self, cr, uid, ids, context=None):
         ref = self.pool.get('cenit.flow.reference')
@@ -200,12 +203,18 @@ class CenitFlowReference(models.Model):
     def unlink(self, cr, uid, ids, context=None):
         client = self.pool.get('cenit.client')
         for obj in self.browse(cr, uid, ids):
-            client.delete(cr, uid, '/setup/flows/%s' % obj.flow_ref)
+            try:
+                client.delete(cr, uid, '/setup/flows/%s' % obj.flow_ref)
+            except:
+                pass
         return super(CenitFlowReference, self).unlink(cr, uid, ids, context)
 
     def set_flow_in_cenit(self, cr, uid, flow, context=None):
         ref = {}
         client = self.pool.get('cenit.client')
+        flow_name = '%s - %s' % (flow.name, client.instance(cr, uid).role)
+        if self.exists_flow(cr, uid, flow_name, context):
+            return False
         ref_id = self.search(cr, uid, [('flow_id', '=', flow.id)])
         if not ref_id:
             ref['flow_id'] = flow.id
@@ -214,7 +223,7 @@ class CenitFlowReference(models.Model):
             ref['data_type_ref'] = self.get_data_type(cr, uid, flow, context)
             ref['event_ref'] = self.get_event(cr, uid, flow, context)
             vals = {
-                'name': flow.name,
+                'name': flow_name,
                 'purpose': 'send',
                 'connection_role_id': ref['role_ref'],
                 'data_type_id': ref['data_type_ref'],
@@ -259,3 +268,10 @@ class CenitFlowReference(models.Model):
         vals = {'name': name, 'path': path}
         response = client.post(cr, uid, '/setup/webhooks', {'webhook': vals})
         return response['id']
+
+    def exists_flow(self, cr, uid, flow_name, context=None):
+        client = self.pool.get('cenit.client')
+        for element in client.get(cr, uid, '/setup/flows'):
+            if element['name'] == flow_name:
+                return True
+        return False
