@@ -28,7 +28,7 @@
     'description': """
         OpenERP Cenit Product
     """,
-    'depends': ['oe_cenit_client', 'product'],
+    'depends': ['oe_cenit_client', 'product', 'stock'],
     'data': ['data/data.xml'],
     'installable': True
 }
