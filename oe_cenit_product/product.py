@@ -5,16 +5,11 @@ from openerp.osv import fields
 from openerp.addons.oe_cenit_client import mixin
 
 
-class ProductTemplate(mixin.CenitMixin, models.Model):
+class ProductTemplate(mixin.SenderMixin, models.Model):
     _name = 'product.template'
     _inherit = 'product.template'
 
     _options = []
-
-    def create(self, cr, uid, vals, context=None):
-        if not vals.get('sku', False):
-            vals['sku'] = vals.get('name', '').lower().replace(' ', '-')
-        return super(ProductTemplate, self).create(cr, uid, vals, context)
 
     def _match_variant(self, cr, uid, value_ids, params, context=None):
         for p in params:
@@ -167,7 +162,6 @@ class ProductTemplate(mixin.CenitMixin, models.Model):
         return result
 
     _columns = {
-        'sku': fields.char('SKU', size=128),
         'taxons': fields.function(_get_taxons, method=True, type='char',
                                   fnct_inv=_set_taxons, priority=1),
         'properties': fields.function(_get_properties, method=True,
@@ -182,7 +176,7 @@ class ProductTemplate(mixin.CenitMixin, models.Model):
     }
 
 
-class StockMove(mixin.CenitMixin, models.Model):
+class StockMove(mixin.SenderMixin, models.Model):
     _name = 'stock.move'
     _inherit = 'stock.move'
 

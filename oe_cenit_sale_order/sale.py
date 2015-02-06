@@ -5,7 +5,7 @@ from openerp.osv import fields
 from openerp.addons.oe_cenit_client import mixin
 
 
-class SaleOrder(mixin.CenitMixin, models.Model):
+class SaleOrder(mixin.SenderMixin, models.Model):
     _name = 'sale.order'
     _inherit = 'sale.order'
 
