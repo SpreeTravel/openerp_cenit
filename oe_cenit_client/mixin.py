@@ -36,3 +36,7 @@ class SynchMixin(object):
         vals = ws.serialize_model_id(cr, uid, model, oid)
         root = self.get_root(cr, uid, model)
         return connector.call(db, 'cenit.handler', method, vals, root)
+
+    def find_object(self, cr, uid, db, model, name):
+        res = connector.call(db, model, 'search', [('name', '=', name)])
+        return res and res[0] or False

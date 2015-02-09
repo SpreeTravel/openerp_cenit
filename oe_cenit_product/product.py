@@ -141,7 +141,7 @@ class ProductTemplate(mixin.SenderMixin, models.Model):
                     options[at.name] = value
                 var['options'] = options
                 variants.append(var)
-            result[obj.id] = variants
+            result[obj.id] = str(variants)
         return result
 
     def _set_suppliers(self, cr, uid, oid, name, value, args, context=None):
