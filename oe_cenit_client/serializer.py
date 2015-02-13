@@ -17,7 +17,7 @@ class CenitSerializer(models.TransientModel):
         if matching_id:
             match = wdt.browse(cr, uid, matching_id[0], context)
             for field in match.line_ids:
-                if field.line_type == 'field':
+                if field.line_type == 'field' and getattr(obj, field.name):
                     try:
                         vals[field.value] = eval(getattr(obj, field.name))
                     except:

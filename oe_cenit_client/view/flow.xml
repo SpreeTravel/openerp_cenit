@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+  <data>
+	
+	<record id="cenit_flow_view_tree" model="ir.ui.view">
+        <field name="name">cenit.flow.view.tree</field>
+        <field name="model">cenit.flow</field>
+        <field name="arch" type="xml">
+            <tree string="Flows" >
+            	<field name="name" />
+				<field name="root" />
+				<field name="model_id" />
+				<field name="purpose" />
+				<field name="execution" />
+				<button name="process_all" type="object" string="Process" icon="gtk-go-forward" attrs="{'invisible': [('purpose', '=', 'receive')]}"/>
+				<button name="set_send_execution" type="object" string="Set Send Execution" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('purpose', '=', 'receive')]}"/>
+				<button name="set_receive_execution" type="object" string="Set Reference" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('purpose', '=', 'send')]}"/>
+				<button name="clean_reference" type="object" string="Clean Reference" icon="gtk-clear" attrs="{'invisible': [('purpose', '=', 'send')]}"/>
+            </tree>
+        </field>
+    </record>
+
+	<record id="cenit_flow_view_form" model="ir.ui.view">
+        <field name="name">cenit.flow.view.form</field>
+        <field name="model">cenit.flow</field>
+        <field name="arch" type="xml">
+            <form string="Flow" version="7.0">
+            	<sheet>
+            		<group>
+            			<field name="name"/>
+						<field name="root"/>
+						<field name="model_id"/>
+					</group>
+					<group>
+						<field name="purpose"/>
+						<field name="execution"/>
+						<field name="method"/>
+						<field name="format"/>
+					</group>
+				</sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="cenit_flow_action" model="ir.actions.act_window">
+        <field name="name">Flows</field>
+        <field name="res_model">cenit.flow</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="cenit_flow_view_tree"/>
+    </record>
+	
+	<menuitem id="cenit_flow_menu" sequence="2" parent="cenit" action="cenit_flow_action"/>
+
+  </data>
+</openerp>

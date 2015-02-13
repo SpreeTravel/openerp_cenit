@@ -30,8 +30,10 @@
     """,
     'depends': ['base', 'base_action_rule'],
     'data': [
+        'security/ir.model.access.csv',
         'view/client.xml',
-        'view/data_type.xml'
+        'view/flow.xml',
+        'view/data_type.xml',
     ],
     'installable': True
 }

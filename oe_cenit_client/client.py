@@ -18,146 +18,108 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
-from openerp import models, fields
 import requests
 import simplejson
+from openerp import models, fields
+from openerp.tools import config
 
 
 class CenitClient(models.Model):
     _name = 'cenit.client'
 
-    name = fields.Char('Name', size=128, required=1)
-    url = fields.Char('URL', size=255)
-    store = fields.Char('Store', size=64)
-    token = fields.Char('Token', size=64)
-    push_object_ids = fields.One2many('cenit.push.object', 'client_id',
-                                      'Models')
+    name = fields.Char('Connection Name', size=128, required=1)
+    role = fields.Char('Connection Role Name', size=128)
 
-    def push(self, cr, uid, ids, context=None):
-        res = []
-        obj = self.browse(cr, uid, ids[0], context)
-        for po in obj.push_object_ids:
-            status_code = po.push_all(cr, uid, [po.id], context)
-            res.append(status_code)
-        return res
+    connection_key = fields.Char('Connection Key', size=128)
+    connection_token = fields.Char('Connection Token', size=128)
+    connection_ref = fields.Char('Connection Ref', size=128)
+    connection_role_ref = fields.Char('Connection Role Ref', size=128)
 
-
-class cenitPushObject(models.Model):
-    _name = 'cenit.push.object'
-
-    client_id = fields.Many2one('cenit.client', 'Client')
-    root = fields.Char('Root', size=64)
-    model_id = fields.Many2one('ir.model', 'Model')
-    push_type = fields.Selection([('only_manual', 'Only Manual'),
-                                  ('interval', 'Interval'),
-                                  ('on_create', 'On Create'),
-                                  ('on_write', 'On Update'),
-                                  ('on_create_or_write', 'On Create & Update')
-                                  ], 'Push Type', default='only_manual')
-    push_method = fields.Selection([('push_http_post', 'HTTP POST')], 'Method',
-                                   default='push_http_post')
-    base_action_rule_id = fields.Many2one('base.action.rule', 'Action Rule')
-    ir_cron_id = fields.Many2one('ir.cron', 'Action Cron')
+    url = fields.Char('URL', size=255, required=1)
+    key = fields.Char('Key', size=64, required=1)
+    token = fields.Char('Token', size=128, required=1)
 
     def create(self, cr, uid, vals, context=None):
-        obj_id = super(cenitPushObject, self).create(cr, uid, vals, context)
-        if vals.get('push_type', False):
-            obj = self.browse(cr, uid, obj_id)
-            self.set_push_type(cr, uid, obj, context)
-        return obj_id
+        res_id = super(CenitClient, self).create(cr, uid, vals, context)
+        self.set_connection_in_cenit(cr, uid, [res_id], context)
+        return res_id
 
-    def write(self, cr, uid, ids, vals, context=None):
-        res = super(cenitPushObject, self).write(cr, uid, ids, vals, context)
-        if vals.get('push_type', False):
-            for obj in self.browse(cr, uid, ids):
-                self.set_push_type(cr, uid, obj, context)
-        return res
+    def unlink(self, cr, uid, ids, context=None):
+        for obj in self.browse(cr, uid, ids):
+            self.delete(cr, uid, '/setup/connections/%s' % obj.connection_ref)
+        return super(CenitClient, self).unlink(cr, uid, ids)
 
-    def set_push_type(self, cr, uid, obj, context=None):
-        ic_obj = self.pool.get('ir.cron')
-        ias_obj = self.pool.get('ir.actions.server')
-        bar_obj = self.pool.get('base.action.rule')
-        if obj.push_type == 'only_manual':
-            if obj.base_action_rule_id:
-                bar_obj.unlink(cr, uid, obj.base_action_rule_id.id)
-            elif obj.ir_cron_id:
-                ic_obj.unlink(cr, uid, obj.ir_cron_id.id)
-        elif obj.push_type == 'interval':
-            if obj.ir_cron_id:
-                pass
-            else:
-                vals_ic = {
-                    'name': 'push_%s' % obj.model_id.model,
-                    'interval_number': 10,
-                    'interval_type': 'minutes',
-                    'numbercall': -1,
-                    'model': 'cenit.push.object',
-                    'function': 'push_all',
-                    'args': '([%s],)' % str(obj.id)
-                }
-                ic_id = ic_obj.create(cr, uid, vals_ic)
-                self.write(cr, uid, obj.id, {'ir_cron_id': ic_id})
-                if obj.base_action_rule_id:
-                    bar_obj.unlink(cr, uid, obj.base_action_rule_id.id)
-        elif obj.push_type in ['on_create', 'on_write', 'on_create_or_write']:
-            if obj.base_action_rule_id:
-                bar_obj.write(cr, uid, obj.base_action_rule_id.id,
-                              {'kind': obj.push_type})
-            else:
-                vals_ias = {
-                    'name': 'push_%s' % obj.model_id.model,
-                    'model_id': obj.model_id.id,
-                    'state': 'code',
-                    'code': "self.pool.get('cenit.push.object').process(cr, uid, obj, {'client_id': %s})" % str(obj.client_id.id)
-                }
-                ias_id = ias_obj.create(cr, uid, vals_ias)
-                vals_bar = {
-                    'name': 'push_%s' % obj.model_id.model,
-                    'active': True,
-                    'kind': obj.push_type,
-                    'model_id': obj.model_id.id,
-                    'server_action_ids': [(6, 0, [ias_id])]
-                }
-                bar_id = bar_obj.create(cr, uid, vals_bar)
-                self.write(cr, uid, obj.id, {'base_action_rule_id': bar_id})
-                if obj.ir_cron_id:
-                    ic_obj.unlink(cr, uid, obj.ir_cron_id.id)
-        return True
-
-    def process(self, cr, uid, model_obj, context=None):
-        domain = [('model_id.model', '=', model_obj._name)]
-        if context.get('client_id', False):
-            domain.append(('client_id', '=', context.get('client_id')))
-        push_obj_ids = self.search(cr, uid, domain, context=context)
-        if push_obj_ids:
-            push_obj = self.browse(cr, uid, push_obj_ids[0])
-            ws = self.pool.get('cenit.serializer')
-            data = [ws.serialize(cr, uid, model_obj)]
-            return self.push(cr, uid, push_obj, data, context)
-        return False
-
-    def push_all(self, cr, uid, ids, context=None):
+    def set_connection_in_cenit(self, cr, uid, ids, context=None):
         obj = self.browse(cr, uid, ids[0])
-        ws = self.pool.get('cenit.serializer')
-        mo = self.pool.get(obj.model_id.model, False)
-        if mo:
-            models = []
-            model_ids = mo.search(cr, uid, [], context=context)
-            for x in mo.browse(cr, uid, model_ids, context):
-                models.append(ws.serialize(cr, uid, x))
-            return self.push(cr, uid, obj, models, context)
+        role_name = obj.role or 'Master'
+        role_id = self.get_role(cr, uid, role_name, context)
+        cname = obj.name + ' ' + cr.dbname
+        cparams = {'connection': {
+            'name': cname,
+            'url': '%s/cenit' % self.local_url(),
+            'key': cr.dbname,
+            'connection_roles_attributes': [role_id]
+        }}
+        connection = self.post(cr, uid, '/setup/connections', cparams)
+        update = {
+            'connection_key': connection['key'],
+            'connection_token': connection['token'],
+            'connection_ref': connection['id'],
+            'connection_role_ref': role_id
+        }
+        return self.write(cr, uid, obj.id, update)
+
+    def get_role(self, cr, uid, name, context=None):
+        for element in self.get(cr, uid, '/setup/connection_roles'):
+            if element['name'] == name:
+                return element['id']
+        params = {'connection_role': {'name': name}}
+        role = self.post(cr, uid, '/setup/connection_roles', params)
+        return role['id']
+
+    def post(self, cr, uid, path, vals, context=None):
+        config = self.instance(cr, uid, context)
+        payload = simplejson.dumps(vals)
+        r = requests.post(config.url + path, data=payload, headers=self.headers(config))
+        if r.status_code == 201:
+            return simplejson.loads(r.content)
+        raise Warning('Error trying to configure Cenit.')
+
+    def put(self, cr, uid, path, vals, context=None):
+        config = self.instance(cr, uid, context)
+        payload = simplejson.dumps(vals)
+        r = requests.put(config.url + path, data=payload, headers=self.headers(config))
+        if r.status_code == 204:
+            return True
+        raise Warning('Error trying to configure Cenit.')
+
+    def get(self, cr, uid, path, context=None):
+        config = self.instance(cr, uid, context)
+        r = requests.get(config.url + path, headers=self.headers(config))
+        if r.status_code == 200:
+            return simplejson.loads(r.content)
+        raise Warning('Error getting data from Cenit.')
+
+    def delete(self, cr, uid, path, context=None):
+        config = self.instance(cr, uid, context)
+        r = requests.delete(config.url + path, headers=self.headers(config))
+        if r.status_code == 204:
+            return True
+        raise Warning('Error removing data in Cenit.')
+
+    def instance(self, cr, uid, context=None):
+        client = self.pool.get('cenit.client')
+        client_ids = client.search(cr, uid, [])
+        if client_ids:
+            return client.browse(cr, uid, client_ids[0])
         return False
 
-    def push(self, cr, uid, obj, data, context=None):
-        return getattr(self, obj.push_method)(cr, uid, obj, data)
-
-    def push_http_post(self, cr, uid, obj, data, context=None):
-        payload = simplejson.dumps({obj.root: data})
-        headers = {
+    def headers(self, config):
+        return {
             'Content-Type': 'application/json',
-            'X-Hub-Store': obj.client_id.store,
-            'X-Hub-Access-Token': obj.client_id.token
+            'X-User-Key': config.key,
+            'X-User-Access-Token': config.token
         }
-        r = requests.post(obj.client_id.url, data=payload, headers=headers)
-        return r.status_code
+
+    def local_url(self):
+        return config.get('local_url', 'http://localhost:8069')
