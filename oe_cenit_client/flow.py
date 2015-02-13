@@ -39,6 +39,8 @@ class CenitFlow(models.Model):
                                   ('on_write', 'On Update'),
                                   ('on_create_or_write', 'On Create & Update')
                                   ], 'Execution', default='only_manual')
+    format = fields.Selection([('json', 'JSON'), ('edi', 'EDI')], 'Format',
+                              default='json')
     method = fields.Selection([('http_post', 'HTTP POST'),
                                ('local_post', 'LOCAL POST')], 'Method',
                               default='http_post')
@@ -160,9 +162,12 @@ class CenitFlow(models.Model):
         if mo:
             models = []
             model_ids = mo.search(cr, uid, [], context=context)
-            for x in mo.browse(cr, uid, model_ids, context):
-                models.append(ws.serialize(cr, uid, x))
-            if models:
+            if obj.format == 'json':
+                for x in mo.browse(cr, uid, model_ids, context):
+                    models.append(ws.serialize(cr, uid, x))
+            elif obj.format == 'edi' and hasattr(mo, 'edi_export'):
+                models = mo.edi_export(cr, uid, mo.browse(cr, uid, model_ids))
+            if model_ids:
                 return self.process(cr, uid, obj, models, context)
         return False
 
