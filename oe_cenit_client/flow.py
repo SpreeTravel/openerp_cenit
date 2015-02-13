@@ -22,7 +22,7 @@ import requests
 import simplejson
 import inflect
 from openerp import models, fields
-from openerp.addons.oe_saas_utils import connector
+from openerp.addons.saas_utils import connector
 
 
 class CenitFlow(models.Model):
@@ -42,7 +42,8 @@ class CenitFlow(models.Model):
     format = fields.Selection([('json', 'JSON'), ('edi', 'EDI')], 'Format',
                               default='json')
     method = fields.Selection([('http_post', 'HTTP POST'),
-                               ('local_post', 'LOCAL POST')], 'Method',
+                               ('local_post', 'LOCAL POST'),
+                               ('file_post', 'FILE POST')], 'Method',
                               default='http_post')
 
     base_action_rule_id = fields.Many2one('base.action.rule', 'Action Rule')
@@ -142,16 +143,25 @@ class CenitFlow(models.Model):
                            (ref_id[0],))
         return True
 
+    def find(self, cr, uid, model, purpose, context=None):
+        domain = [('root', '=', model), ('purpose', '=', purpose)]
+        obj_ids = self.search(cr, uid, domain, context=context)
+        return obj_ids and self.browse(cr, uid, obj_ids[0]) or False
+
     def execute(self, cr, uid, model_obj, context=None):
-        if model_obj.sender == 'client':
-            return False
+        #if model_obj.sender == 'client':
+        #    return False
         domain = [('model_id.model', '=', model_obj._name),
                   ('purpose', '=', 'send')]
         flow_obj_ids = self.search(cr, uid, domain, context=context)
         if flow_obj_ids:
             flow_obj = self.browse(cr, uid, flow_obj_ids[0])
-            ws = self.pool.get('cenit.serializer')
-            data = [ws.serialize(cr, uid, model_obj)]
+            if flow_obj.format == 'json':
+                ws = self.pool.get('cenit.serializer')
+                data = [ws.serialize(cr, uid, model_obj)]
+            elif flow_obj.format == 'edi':
+                data = self.pool.get(model_obj._name).edi_export(cr, uid,
+                                                                 [model_obj])
             return self.process(cr, uid, flow_obj, data, context)
         return False
 
@@ -174,6 +184,18 @@ class CenitFlow(models.Model):
     def process(self, cr, uid, obj, data, context=None):
         return getattr(self, obj.method)(cr, uid, obj, data, context)
 
+    def process_in(self, cr, uid, model, data, context=None):
+        obj = self.find(cr, uid, model, 'receive', context)
+        if obj:
+            if obj.format == 'json':
+                action = context.get('action', 'synch')
+                wh = self.pool.get('cenit.handler')
+                getattr(wh, action)(cr, uid, data, obj.root, context)
+            elif obj.format == 'edi':
+                mo = self.pool.get(obj.model_id.model)
+                for edi_document in data:
+                    mo.edi_import(cr, uid, edi_document, context)
+
     def http_post(self, cr, uid, obj, data, context=None):
         client = self.pool.get('cenit.client').instance(cr, uid, context)
         p = inflect.engine()
@@ -190,9 +212,16 @@ class CenitFlow(models.Model):
     def local_post(self, cr, uid, obj, data, context=None):
         db = context.get('partner_db')
         if db:
-            return connector.call(db, 'cenit.handler', 'synch', data,
-                                  obj.root.lower())
+            return connector.call(db, 'cenit.flow', 'process_in',
+                                  obj.root.lower(), data)
         return False
+
+    def file_post(self, cr, uid, obj, data, context=None):
+        p = inflect.engine()
+        payload = simplejson.dumps({p.plural(obj.root.lower()): data})
+        f = open('/home/cesar/file_post', 'w')
+        f.write(payload)
+        f.close()
 
 
 class CenitFlowReference(models.Model):

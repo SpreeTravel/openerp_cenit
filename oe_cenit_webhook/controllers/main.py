@@ -14,9 +14,9 @@ class WebhookController(http.Controller):
             uid = request.session.authenticate(db, 'admin', 'admin')
             if uid is not False:
                 action, model = path.split('_')
-                wh = request.registry.models.get('cenit.handler')
-                context = {'sender': 'client'}
-                return getattr(wh, action)(request.cr, request.uid,
-                                           request.jsonrequest[model],
-                                           model, context)
+                flow_obj = request.registry.models.get('cenit.flow')
+                context = {'sender': 'client', 'action': action}
+                flow_obj.process_in(request.cr, request.uid, model,
+                                    request.jsonrequest[model],
+                                    context)
         return False

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from openerp import fields
-from openerp.addons.oe_saas_utils import connector
+from openerp.addons.saas_utils import connector
 
 
 class SenderMixin(object):
