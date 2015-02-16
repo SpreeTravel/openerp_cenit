@@ -67,7 +67,7 @@ class CenitHandler(models.TransientModel):
             obj_id = self.find(cr, uid, match, model_obj, p, context)
             if not obj_id:
                 vals = self.process(cr, uid, match, p, context)
-                vals['sender'] = context.get('sender')
+                #vals['sender'] = context.get('sender')
                 obj_id = model_obj.create(cr, uid, vals, context)
             obj_ids.append(obj_id)
         return obj_ids
@@ -85,7 +85,7 @@ class CenitHandler(models.TransientModel):
             obj_id = self.find(cr, uid, match, model_obj, p, context)
             if obj_id:
                 vals = self.process(cr, uid, match, p, context)
-                vals['sender'] = context.get('sender')
+                #vals['sender'] = context.get('sender')
                 model_obj.write(cr, uid, obj_id, vals, context)
             obj_ids.append(obj_id)
         return obj_ids
@@ -101,7 +101,7 @@ class CenitHandler(models.TransientModel):
         obj_ids = []
         for p in params:
             vals = self.process(cr, uid, match, p, context)
-            vals['sender'] = context.get('sender')
+            #vals['sender'] = context.get('sender')
             model_obj = self.pool.get(match.model_id.model)
             obj_id = self.find(cr, uid, match, model_obj, p, context)
             if obj_id:

@@ -185,7 +185,8 @@ class CenitFlow(models.Model):
         return getattr(self, obj.method)(cr, uid, obj, data, context)
 
     def process_in(self, cr, uid, model, data, context=None):
-        obj = self.find(cr, uid, model, 'receive', context)
+        context = context or {}
+        obj = self.find(cr, uid, model.lower(), 'receive', context)
         if obj:
             if obj.format == 'json':
                 action = context.get('action', 'synch')
@@ -244,6 +245,7 @@ class CenitFlowReference(models.Model):
         return super(CenitFlowReference, self).unlink(cr, uid, ids, context)
 
     def set_flow_in_cenit(self, cr, uid, flow, context=None):
+        return True
         ref = {}
         client = self.pool.get('cenit.client')
         flow_name = '%s - %s' % (flow.name, client.instance(cr, uid).role)
@@ -286,7 +288,7 @@ class CenitFlowReference(models.Model):
         event = 'created_at'
         if flow.execution == 'on_write':
             event = 'updated_at'
-        event_name = '%s on %s' % (flow.root, event)
+        event_name = '%s on %s' % (flow.root.capitalize(), event)
         for element in client.get(cr, uid, '/setup/events'):
             if element['name'] == event_name:
                 return element['id']
