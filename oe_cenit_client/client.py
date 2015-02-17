@@ -45,8 +45,11 @@ class CenitClient(models.Model):
         return res_id
 
     def unlink(self, cr, uid, ids, context=None):
-        for obj in self.browse(cr, uid, ids):
-            self.delete(cr, uid, '/setup/connections/%s' % obj.connection_ref)
+        try:
+            for obj in self.browse(cr, uid, ids):
+                self.delete(cr, uid, '/setup/connections/%s' % obj.connection_ref)
+        except:
+            pass
         return super(CenitClient, self).unlink(cr, uid, ids)
 
     def set_connection_in_cenit(self, cr, uid, ids, context=None):
