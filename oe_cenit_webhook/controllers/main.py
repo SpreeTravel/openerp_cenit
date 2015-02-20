@@ -27,7 +27,7 @@ class WebhookController(http.Controller):
         print file_path
         delimiter = '@'
         market_price = request.registry.models.get('market.price.by.date')
-        uid = request.session.authenticate('master', 'admin', '12345678')
+        uid = request.session.authenticate('master', 'admin', 'admin')
         row_number = 0
         for row in CsvUnicodeReader(open(file_path, 'rb'),
                                     delimiter=delimiter, quotechar='"',
