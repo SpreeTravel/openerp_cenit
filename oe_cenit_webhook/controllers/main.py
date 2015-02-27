@@ -4,6 +4,7 @@ from openerp import http
 from openerp.http import request
 from openerp.addons.oe_cenit_webhook.csv_utils import CsvUnicodeReader
 
+
 class WebhookController(http.Controller):
 
     @http.route('/cenit/<string:path>', type='json', auth='none')
@@ -45,6 +46,6 @@ class WebhookController(http.Controller):
                         vals['origin'] = row[5]
                         vals['date'] = row[6]
                         vals['per_lb'] = row[7]
-                        market_price.create(request.cr,request.uid,vals,request.context)
-            
+                        market_price.create(request.cr, request.uid, vals,
+                                            request.context)
         return "<h1>This is a test</h1>"

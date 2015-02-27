@@ -67,7 +67,10 @@ class CenitHandler(models.TransientModel):
             obj_id = self.find(cr, uid, match, model_obj, p, context)
             if not obj_id:
                 vals = self.process(cr, uid, match, p, context)
-                obj_id = model_obj.create(cr, uid, vals, context)
+                try:
+                    obj_id = model_obj.create(cr, uid, vals, context)
+                except:
+                    pass
             obj_ids.append(obj_id)
         return obj_ids
 
