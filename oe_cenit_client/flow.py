@@ -149,8 +149,6 @@ class CenitFlow(models.Model):
         return obj_ids and self.browse(cr, uid, obj_ids[0]) or False
 
     def execute(self, cr, uid, model_obj, context=None):
-        #if model_obj.sender == 'client':
-        #    return False
         domain = [('model_id.model', '=', model_obj._name),
                   ('purpose', '=', 'send')]
         flow_obj_ids = self.search(cr, uid, domain, context=context)

@@ -53,7 +53,7 @@ class CenitClient(models.Model):
         return super(CenitClient, self).unlink(cr, uid, ids)
 
     def set_connection_in_cenit(self, cr, uid, ids, context=None):
-        #return True
+        return True
         obj = self.browse(cr, uid, ids[0])
         role_name = obj.role or 'Master'
         role_id = self.get_role(cr, uid, role_name, context)
