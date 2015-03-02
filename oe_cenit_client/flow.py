@@ -71,6 +71,33 @@ class CenitFlow(models.Model):
                 ref_obj.unlink(cr, uid, ref_ids)
         return super(CenitFlow, self).unlink(cr, uid, ids, context)
 
+    def find(self, cr, uid, model, purpose, context=None):
+        domain = [('root', '=', model), ('purpose', '=', purpose)]
+        obj_ids = self.search(cr, uid, domain, context=context)
+        return obj_ids and self.browse(cr, uid, obj_ids[0]) or False
+
+    def set_receive_execution(self, cr, uid, ids, context=None):
+        for obj in self.browse(cr, uid, ids):
+            if obj.method == 'http_post':
+                flow_reference = self.pool.get('cenit.flow.reference')
+                try:
+                    flow_reference.set_flow_in_cenit(cr, uid, obj, context)
+                except:
+                    pass
+
+    def receive(self, cr, uid, model, data, context=None):
+        context = context or {}
+        obj = self.find(cr, uid, model.lower(), 'receive', context)
+        if obj:
+            if obj.format == 'json':
+                action = context.get('action', 'synch')
+                wh = self.pool.get('cenit.handler')
+                getattr(wh, action)(cr, uid, data, obj.root, context)
+            elif obj.format == 'edi':
+                mo = self.pool.get(obj.model_id.model)
+                for edi_document in data:
+                    mo.edi_import(cr, uid, edi_document, context)
+
     def set_send_execution(self, cr, uid, ids, context=None):
         obj = self.browse(cr, uid, ids[0], context)
         ic_obj = self.pool.get('ir.cron')
@@ -91,7 +118,7 @@ class CenitFlow(models.Model):
                     'interval_type': 'minutes',
                     'numbercall': -1,
                     'model': 'cenit.flow',
-                    'function': 'process_all',
+                    'function': 'send_all',
                     'args': '([%s],)' % str(obj.id)
                 }
                 ic_id = ic_obj.create(cr, uid, vals_ic)
@@ -107,7 +134,7 @@ class CenitFlow(models.Model):
                     'name': 'push_%s' % obj.model_id.model,
                     'model_id': obj.model_id.id,
                     'state': 'code',
-                    'code': "self.pool.get('cenit.flow').execute(cr, uid, obj)"
+                    'code': "self.pool.get('cenit.flow').send(cr, uid, obj)"
                 }
                 ias_id = ias_obj.create(cr, uid, vals_ias)
                 vals_bar = {
@@ -123,32 +150,7 @@ class CenitFlow(models.Model):
                     ic_obj.unlink(cr, uid, obj.ir_cron_id.id)
         return True
 
-    def set_receive_execution(self, cr, uid, ids, context=None):
-        for obj in self.browse(cr, uid, ids):
-            if obj.method == 'http_post':
-                flow_reference = self.pool.get('cenit.flow.reference')
-                try:
-                    flow_reference.set_flow_in_cenit(cr, uid, obj, context)
-                except:
-                    pass
-
-    def clean_reference(self, cr, uid, ids, context=None):
-        ref = self.pool.get('cenit.flow.reference')
-        ref_id = ref.search(cr, uid, [('flow_id', 'in', ids)], context=context)
-        if ref_id:
-            try:
-                ref.unlink(cr, uid, ref_id)
-            except:
-                cr.execute('delete from cenit_flow_reference where id = %s',
-                           (ref_id[0],))
-        return True
-
-    def find(self, cr, uid, model, purpose, context=None):
-        domain = [('root', '=', model), ('purpose', '=', purpose)]
-        obj_ids = self.search(cr, uid, domain, context=context)
-        return obj_ids and self.browse(cr, uid, obj_ids[0]) or False
-
-    def execute(self, cr, uid, model_obj, context=None):
+    def send(self, cr, uid, model_obj, context=None):
         domain = [('model_id.model', '=', model_obj._name),
                   ('purpose', '=', 'send')]
         flow_obj_ids = self.search(cr, uid, domain, context=context)
@@ -160,10 +162,10 @@ class CenitFlow(models.Model):
             elif flow_obj.format == 'edi':
                 data = self.pool.get(model_obj._name).edi_export(cr, uid,
                                                                  [model_obj])
-            return self.process(cr, uid, flow_obj, data, context)
+            return self._send(cr, uid, flow_obj, data, context)
         return False
 
-    def process_all(self, cr, uid, ids, context=None):
+    def send_all(self, cr, uid, ids, context=None):
         obj = self.browse(cr, uid, ids[0])
         ws = self.pool.get('cenit.serializer')
         mo = self.pool.get(obj.model_id.model, False)
@@ -176,24 +178,11 @@ class CenitFlow(models.Model):
             elif obj.format == 'edi' and hasattr(mo, 'edi_export'):
                 models = mo.edi_export(cr, uid, mo.browse(cr, uid, model_ids))
             if model_ids:
-                return self.process(cr, uid, obj, models, context)
+                return self._send(cr, uid, obj, models, context)
         return False
 
-    def process(self, cr, uid, obj, data, context=None):
+    def _send(self, cr, uid, obj, data, context=None):
         return getattr(self, obj.method)(cr, uid, obj, data, context)
-
-    def process_in(self, cr, uid, model, data, context=None):
-        context = context or {}
-        obj = self.find(cr, uid, model.lower(), 'receive', context)
-        if obj:
-            if obj.format == 'json':
-                action = context.get('action', 'synch')
-                wh = self.pool.get('cenit.handler')
-                getattr(wh, action)(cr, uid, data, obj.root, context)
-            elif obj.format == 'edi':
-                mo = self.pool.get(obj.model_id.model)
-                for edi_document in data:
-                    mo.edi_import(cr, uid, edi_document, context)
 
     def http_post(self, cr, uid, obj, data, context=None):
         client = self.pool.get('cenit.client').instance(cr, uid, context)
@@ -211,7 +200,7 @@ class CenitFlow(models.Model):
     def local_post(self, cr, uid, obj, data, context=None):
         db = context.get('partner_db')
         if db:
-            return connector.call(db, 'cenit.flow', 'process_in',
+            return connector.call(db, 'cenit.flow', 'receive',
                                   obj.root.lower(), data)
         return False
 
@@ -221,6 +210,17 @@ class CenitFlow(models.Model):
         f = open('/home/cesar/file_post', 'w')
         f.write(payload)
         f.close()
+
+    def clean_reference(self, cr, uid, ids, context=None):
+        ref = self.pool.get('cenit.flow.reference')
+        ref_id = ref.search(cr, uid, [('flow_id', 'in', ids)], context=context)
+        if ref_id:
+            try:
+                ref.unlink(cr, uid, ref_id)
+            except:
+                cr.execute('delete from cenit_flow_reference where id = %s',
+                           (ref_id[0],))
+        return True
 
 
 class CenitFlowReference(models.Model):

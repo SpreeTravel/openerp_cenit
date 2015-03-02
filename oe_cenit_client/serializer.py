@@ -23,6 +23,8 @@ class CenitSerializer(models.TransientModel):
                         continue
                     try:
                         vals[field.value] = eval(getattr(obj, field.name))
+                        if type(vals[field.value]) == type:
+                            vals[field.value] = getattr(obj, field.name)
                     except:
                         vals[field.value] = getattr(obj, field.name)
                 elif field.line_type == 'model':

@@ -17,9 +17,8 @@ class WebhookController(http.Controller):
                 action, model = path.split('_')
                 flow_obj = request.registry.models.get('cenit.flow')
                 context = {'sender': 'client', 'action': action}
-                flow_obj.process_in(request.cr, request.uid, model,
-                                    request.jsonrequest[model],
-                                    context)
+                flow_obj.receive(request.cr, request.uid, model,
+                                 request.jsonrequest[model], context)
         return False
 
     @http.route('/oscar/usdadata', type='json', auth='none')
