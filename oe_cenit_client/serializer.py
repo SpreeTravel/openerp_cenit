@@ -16,11 +16,16 @@ class CenitSerializer(models.TransientModel):
                                  context=context)
         if matching_id:
             match = wdt.browse(cr, uid, matching_id[0], context)
+            columns = self.pool.get(obj._name)._columns
             for field in match.line_ids:
                 if field.line_type == 'field' and getattr(obj, field.name):
                     if field.name == 'state':
                         vals[field.value] = self.map_states_in_orders(obj)
                         continue
+                    elif field.name in columns:
+                        if columns[field.name]._type == 'date':
+                            vals[field.value] = getattr(obj, field.name)
+                            continue
                     try:
                         vals[field.value] = eval(getattr(obj, field.name))
                         if type(vals[field.value]) == type:

@@ -86,6 +86,7 @@ class CenitFlow(models.Model):
                     pass
 
     def receive(self, cr, uid, model, data, context=None):
+        res = False
         context = context or {}
         obj = self.find(cr, uid, model.lower(), 'receive', context)
         if obj:
@@ -93,10 +94,13 @@ class CenitFlow(models.Model):
                 action = context.get('action', 'synch')
                 wh = self.pool.get('cenit.handler')
                 getattr(wh, action)(cr, uid, data, obj.root, context)
+                res = True
             elif obj.format == 'edi':
                 mo = self.pool.get(obj.model_id.model)
                 for edi_document in data:
                     mo.edi_import(cr, uid, edi_document, context)
+                res = True
+        return res
 
     def set_send_execution(self, cr, uid, ids, context=None):
         obj = self.browse(cr, uid, ids[0], context)
