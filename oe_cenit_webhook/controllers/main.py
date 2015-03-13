@@ -10,9 +10,10 @@ class WebhookController(http.Controller):
     @http.route('/cenit/<string:path>', type='json', auth='none')
     def consume(self, path):
         db = request.httprequest.headers.environ['HTTP_X_HUB_STORE']
-        pwd = request.httprequest.headers.environ['HTTP_X_HUB_TOKEN']
+        user = request.httprequest.headers.environ.get('HTTP_X_HUB_USER', 'admin')
+        pwd = request.httprequest.headers.environ.get('HTTP_X_HUB_TOKEN', 'admin')
         if db in http.db_list():
-            uid = request.session.authenticate(db, 'admin', 'admin')
+            uid = request.session.authenticate(db, user, pwd)
             if uid is not False:
                 action, model = path.split('_')
                 flow_obj = request.registry.models.get('cenit.flow')
