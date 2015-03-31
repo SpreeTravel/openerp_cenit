@@ -19,10 +19,7 @@ class CenitSerializer(models.TransientModel):
             columns = self.pool.get(obj._name)._columns
             for field in match.line_ids:
                 if field.line_type == 'field' and getattr(obj, field.name):
-                    if field.name == 'state':
-                        vals[field.value] = self.map_states_in_orders(obj)
-                        continue
-                    elif field.name in columns:
+                    if field.name in columns:
                         if columns[field.name]._type == 'date':
                             vals[field.value] = getattr(obj, field.name)
                             continue
@@ -47,12 +44,3 @@ class CenitSerializer(models.TransientModel):
     def serialize_model_id(self, cr, uid, model, oid, context=None):
         obj = self.pool.get(model).browse(cr, uid, oid)
         return self.serialize(cr, uid, obj, context)
-
-    def map_states_in_orders(self, obj):
-        orders = {
-            'purchase.order': {'bid': 'sent', 'confirmed': 'manual'},
-            'sale.order': {'sent': 'bid', 'manual': 'confirmed'}
-        }
-        if obj._name in orders.keys():
-            return orders[obj._name].get(obj.state, obj.state)
-        return obj.state

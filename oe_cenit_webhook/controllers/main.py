@@ -14,7 +14,7 @@ class WebhookController(http.Controller):
         pwd = request.httprequest.headers.environ.get('HTTP_X_HUB_TOKEN', 'admin')
         if db in http.db_list():
             uid = request.session.authenticate(db, user, pwd)
-            if uid is not False:
+            if uid   is not False:
                 action, model = path.split('_')
                 flow_obj = request.registry.models.get('cenit.flow')
                 context = {'sender': 'client', 'action': action}
