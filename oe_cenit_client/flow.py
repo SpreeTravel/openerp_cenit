@@ -21,7 +21,8 @@
 import requests
 import simplejson
 import inflect
-from openerp import models, fields
+import openerp
+from openerp import models, fields, SUPERUSER_ID as SI
 from openerp.addons.saas_utils import connector
 
 
@@ -204,9 +205,13 @@ class CenitFlow(models.Model):
     def local_post(self, cr, uid, obj, data, context=None):
         db = context.get('partner_db')
         if db:
-            return connector.call(db, 'cenit.flow', 'receive',
-                                  obj.root.lower(), data)
-        return False
+            registry = openerp.modules.registry.RegistryManager.get(db)
+            with registry.cursor() as rcr:
+                uids = registry['res.users'].search(rcr, SI,
+                                                [('oauth_uid', '!=', False)])
+                ruid = uids and uids[0] or SI
+                model = obj.root.lower()
+                return registry['cenit.flow'].receive(rcr, ruid, model, data)
 
     def file_post(self, cr, uid, obj, data, context=None):
         p = inflect.engine()
