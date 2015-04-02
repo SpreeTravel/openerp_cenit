@@ -91,15 +91,16 @@ class CenitFlow(models.Model):
         context = context or {}
         obj = self.find(cr, uid, model.lower(), 'receive', context)
         if obj:
+            klass = self.pool.get(obj.model_id.model)
             if obj.format == 'json':
                 action = context.get('action', 'synch')
                 wh = self.pool.get('cenit.handler')
-                getattr(wh, action)(cr, uid, data, obj.root, context)
+                context.update({'receive_object': True})
+                xids = getattr(wh, action)(cr, uid, data, obj.root, context)
                 res = True
             elif obj.format == 'edi':
-                mo = self.pool.get(obj.model_id.model)
                 for edi_document in data:
-                    mo.edi_import(cr, uid, edi_document, context)
+                    klass.edi_import(cr, uid, edi_document, context)
                 res = True
         return res
 
