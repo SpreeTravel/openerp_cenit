@@ -31,9 +31,12 @@
     'depends': ['base', 'base_action_rule'],
     'data': [
         'security/ir.model.access.csv',
-        'view/client.xml',
-        'view/flow.xml',
-        'view/data_type.xml',
+        'view/config.xml',
+        'view/data_definitions.xml',
+        'view/setup.xml',
+        #~ 'view/client.xml',
+        #~ 'view/flow.xml',
+        #~ 'view/data_type.xml',
     ],
     'installable': True
 }

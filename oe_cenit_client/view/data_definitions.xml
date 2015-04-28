@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        
+        <menuitem id="menu_cenit_data_definitions" name="Data Definitions"
+            parent="menu_cenit_integration" sequence="0" />
+        
+        <record id="view_cenit_schema_tree" model="ir.ui.view">
+            <field name="name">view.cenit.schema.tree</field>
+            <field name="model">cenit.schema</field>
+            <field name="arch" type="xml">
+                <tree string="Schemas" >
+                    <field name="library" />
+                    <field name="uri" />
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_cenit_schema_form" model="ir.ui.view">
+            <field name="name">view.cenit.schema.form</field>
+            <field name="model">cenit.schema</field>
+            <field name="arch" type="xml">
+                <form string="Schema">
+                    <group>
+                        <field name="library"/>
+                        <field name="uri"/>
+                    </group>
+                    <group>
+                        <field name="schema" />
+                    </group>
+                </form>
+            </field>
+        </record>
+        
+        <record id="action_cenit_schema" model="ir.actions.act_window">
+            <field name="name">Schemas</field>            
+            <field name="type">ir.actions.act_window</field>            
+            <field name="res_model">cenit.schema</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        
+        <menuitem id="menu_cenit_schema" name="Schemas"
+            parent="menu_cenit_data_definitions" sequence="0"
+            action="action_cenit_schema" />
+
+
+        <record id="view_cenit_library_tree" model="ir.ui.view">
+            <field name="name">view.cenit.library.tree</field>
+            <field name="model">cenit.library</field>
+            <field name="arch" type="xml">
+                <tree string="Libraries" >
+                    <field name="name" />
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_cenit_library_form" model="ir.ui.view">
+            <field name="name">view.cenit.library.form</field>
+            <field name="model">cenit.library</field>
+            <field name="arch" type="xml">
+                <form string="Library">
+                    <group>
+                    <field name="name" />
+                    <field name="schemas" widget="one2many_list"
+                           class="oe_inline oe_no_button"
+                           context="{'library_id': active_id}">
+                        <tree>
+                            <field name="uri" />
+                        </tree>
+                    </field>
+                    </group>
+                </form>
+            </field>
+        </record>
+        
+        <record id="action_cenit_library" model="ir.actions.act_window">
+            <field name="name">Libraries</field>            
+            <field name="type">ir.actions.act_window</field>            
+            <field name="res_model">cenit.library</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        
+        <menuitem id="menu_cenit_library" name="Libraries"
+            parent="menu_cenit_data_definitions" sequence="1"
+            action="action_cenit_library" />
+    </data>
+</openerp>
