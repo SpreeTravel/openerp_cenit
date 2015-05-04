@@ -73,7 +73,7 @@ class CenitApi (object):
             _logger.info ("\n\nResponse received: %s\n", rc)
             update = self._calculate_update (rc)
             rc = self.write (cr, uid, obj.id, update, context={'noPush':True})
-        except Warning, e:
+        except Warning as e:
             _logger.exception (e)
 
         return rc
@@ -88,7 +88,7 @@ class CenitApi (object):
         try:
             rc = self.delete (cr, uid, path, context=context)
             _logger.info ("\n\nResponse received: %s\n", rc)
-        except Warning, e:
+        except Warning as e:
             _logger.exception (e)
 
         return rc
@@ -144,22 +144,9 @@ class CenitApi (object):
             'cenit_user_token': icp.get_param (
                 cr, uid, "odoo_cenit.cenit_user_token", default=None, context=context
             ),
-            #~ 'conn_cenitID': icp.get_param (
-                #~ cr, uid, "odoo_cenit.conn_cenitID", default=None, context=context
-            #~ ),
-            #~ 'conn_name': icp.get_param (
-                #~ cr, uid, "odoo_cenit.conn_name", default=None, context=context
-            #~ ),
-            #~ 'conn_url': icp.get_param (
-                #~ cr, uid, "odoo_cenit.conn_url", default=None, context=context
-            #~ ),
-            #~ 'conn_role_id': icp.get_param (
-                #~ cr, uid, "odoo_cenit.conn_role_id", default=None, context=context
-            #~ ),
         }
 
         return config
-        
 
     def headers(self, config):
         return {
@@ -175,7 +162,7 @@ class CenitApi (object):
 
         try:
             rc = self.cenit_push (cr, uid, obj_id, context=context)
-        except requests.ConnectionError, e:
+        except requests.ConnectionError as e:
             _logger.exception (e)
             warning = {
                 'title': _('Error!'),
@@ -183,7 +170,7 @@ class CenitApi (object):
                     _('Cenit refused the connection. It is probably down.')
             }
             return {'warning': warning}
-        except Exception, e:
+        except Exception as e:
             _logger.exception (e)
             warning = {
                 'title': _('Error!'),
@@ -222,7 +209,7 @@ class CenitApi (object):
             if push:
                 for obj in self.browse (cr, uid, ids, context=context):
                     self.cenit_push (cr, uid, obj.id, context=context)
-        except requests.ConnectionError, e:
+        except requests.ConnectionError as e:
             _logger.exception (e)
             warning = {
                 'title': _('Error!'),
@@ -230,7 +217,7 @@ class CenitApi (object):
                     _('Cenit refused the connection. It is probably down.')
             }
             return {'warning': warning}
-        except Exception, e:
+        except Exception as e:
             _logger.exception (e)
             warning = {
                 'title': _('Error!'),
@@ -253,7 +240,7 @@ class CenitApi (object):
         for rec in self.browse(cr, uid, ids, context=context):
             try:
                 rc = self.cenit_drop (cr, uid, rec.id, context=context)
-            except requests.ConnectionError, e:
+            except requests.ConnectionError as e:
                 _logger.exception (e)
                 warning = {
                     'title': _('Error!'),
@@ -261,7 +248,7 @@ class CenitApi (object):
                         _('Cenit refused the connection. It is probably down.')
                 }
                 return {'warning': warning}
-            except Exception, e:
+            except Exception as e:
                 _logger.exception (e)
                 warning = {
                     'title': _('Error!'),

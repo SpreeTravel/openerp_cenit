@@ -45,6 +45,61 @@
             action="action_cenit_schema" />
 
 
+        <record id="view_cenit_data_type_tree" model="ir.ui.view">
+            <field name="name">view.cenit.data_type.tree</field>
+            <field name="model">cenit.data_type</field>
+            <field name="arch" type="xml">
+                <tree string="data_types" >
+                    <field name="name"/>
+                    <field name="model"/>
+                    <field name="schema"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_cenit_data_type_form" model="ir.ui.view">
+            <field name="name">view.cenit.data_type.form</field>
+            <field name="model">cenit.data_type</field>
+            <field name="arch" type="xml">
+                <form string="Data Type" version="7.0">
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                            <field name="model"/>
+                            <field name="schema"/>
+                        </group>
+                        <notebook>
+                            <page string="Mapping">
+                                <field name="lines">
+                                    <tree string="Lines" editable="bottom">
+                                        <field name="name" string="Odoo" />
+                                        <field name="value" string="Cenit" />
+                                        <field name="line_type" />
+                                        <field name="reference" />
+                                        <field name="line_cardinality" />
+                                        <field name="primary" />
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_cenit_data_type" model="ir.actions.act_window">
+            <field name="name">Data types</field>
+            <field name="res_model">cenit.data_type</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_cenit_data_type_tree"/>
+        </record>
+
+        <menuitem id="menu_cenit_data_type" name="Data types"
+            parent="menu_cenit_data_definitions" sequence="1"
+            action="action_cenit_data_type"/>
+
+
         <record id="view_cenit_library_tree" model="ir.ui.view">
             <field name="name">view.cenit.library.tree</field>
             <field name="model">cenit.library</field>
@@ -61,14 +116,14 @@
             <field name="arch" type="xml">
                 <form string="Library">
                     <group>
-                    <field name="name" />
-                    <field name="schemas" widget="one2many_list"
-                           class="oe_inline oe_no_button"
-                           context="{'library_id': active_id}">
-                        <tree>
-                            <field name="uri" />
-                        </tree>
-                    </field>
+                        <field name="name" />
+                        <field name="schemas" widget="one2many_list"
+                               class="oe_inline oe_no_button"
+                               context="{'library_id': active_id}">
+                            <tree>
+                                <field name="uri" />
+                            </tree>
+                        </field>
                     </group>
                 </form>
             </field>
@@ -83,7 +138,7 @@
         </record>
         
         <menuitem id="menu_cenit_library" name="Libraries"
-            parent="menu_cenit_data_definitions" sequence="1"
+            parent="menu_cenit_data_definitions" sequence="2"
             action="action_cenit_library" />
     </data>
 </openerp>

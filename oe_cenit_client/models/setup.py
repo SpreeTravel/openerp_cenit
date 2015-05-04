@@ -161,3 +161,57 @@ class CenitConnectionParameter (models.Model):
         'cenit.connection',
         string = 'Connection'
     )
+
+
+class CenitFlow (cenit_api.CenitApi, models.Model):
+    _name = "cenit.flow"
+
+    cenit_model = 'flow'
+    cenit_models = 'flows'
+
+    cenitID = fields.Char ('Cenit ID')
+
+    name = fields.Char ('Name', size=64, required=True)
+    root = fields.Char ('Root', size=64, required=True)
+    data_type = fields.Many2one (
+        'cenit.data_type', 'Data type', required=True
+    )
+    purpose = fields.Selection (
+        [
+            ('send', 'Send'),
+            ('receive', 'Receive')
+        ],
+        'Purpose', default='send', required=True
+    )
+    execution = fields.Selection (
+        [
+            ('only_manual', 'Only Manual'),
+            ('interval', 'Interval'),
+            ('on_create', 'On Create'),
+            ('on_write', 'On Update'),
+            ('on_create_or_write', 'On Create & Update')
+        ],
+        'Execution', default='only_manual'
+    )
+    _format = fields.Selection (
+        [
+            ('json', 'JSON'),
+            ('edi', 'EDI')
+        ],
+        'Format', default='json'
+    )
+    method = fields.Selection (
+        [
+            ('http_post', 'HTTP POST'),
+            ('local_post', 'LOCAL POST'),
+            ('file_post', 'FILE POST')
+        ], 'Method', default='http_post'
+    )
+
+    base_action_rule = fields.Many2one (
+        'base.action.rule', 'Action Rule'
+    )
+    ir_cron = fields.Many2one (
+        'ir.cron', 'Action Cron'
+    )
+

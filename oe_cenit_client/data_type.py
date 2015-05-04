@@ -46,3 +46,4 @@ class CenitDataTypeLine(models.Model):
                                         'Cardinality')
     value = fields.Char('Value')
     primary = fields.Boolean('Primary')
+
