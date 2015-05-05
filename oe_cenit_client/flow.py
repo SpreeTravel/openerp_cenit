@@ -207,12 +207,12 @@ class CenitFlow(models.Model):
         db = context.get('partner_db')
         if db:
             registry = openerp.modules.registry.RegistryManager.get(db)
-            with registry.cursor() as rcr:
-                uids = registry['res.users'].search(rcr, SI,
+            with registry.cursor() as db_cr:
+                uids = registry['res.users'].search(db_cr, SI,
                                                 [('oauth_uid', '!=', False)])
                 ruid = uids and uids[0] or SI
                 model = obj.root.lower()
-                return registry['cenit.flow'].receive(rcr, ruid, model, data)
+                return registry['cenit.flow'].receive(db_cr, ruid, model, data)
 
     def file_post(self, cr, uid, obj, data, context=None):
         p = inflect.engine()

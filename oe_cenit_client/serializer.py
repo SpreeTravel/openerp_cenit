@@ -20,7 +20,7 @@ class CenitSerializer(models.TransientModel):
             for field in match.line_ids:
                 if field.line_type == 'field' and getattr(obj, field.name):
                     if field.name in columns:
-                        if columns[field.name]._type == 'date':
+                        if columns[field.name]._type in ['selection', 'date']:
                             vals[field.value] = getattr(obj, field.name)
                             continue
                     try:
