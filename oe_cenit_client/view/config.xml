@@ -21,6 +21,11 @@
                             <field name="cenit_user_token" placeholder="Your cenit's user token" />
                             <field name="odoo_endpoint" placeholder="Set a connection" />
                         </group>
+<!--
+                        <group string="Other settings">
+                            <field name="cenit_translator" />
+                        </group>
+-->
                     </div>
                 </form>
             </field>

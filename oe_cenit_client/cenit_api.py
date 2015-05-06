@@ -23,7 +23,7 @@ import requests
 import simplejson
 import logging
 
-from openerp import models, fields
+from openerp import models, fields, api
 
 from openerp.addons.web.http import request
 
@@ -61,6 +61,7 @@ class CenitApi (object):
 
     def cenit_push (self, cr, uid, _id, context=None):
         obj = self.browse(cr, uid, _id, context=context)
+        
         path = "/api/v1/push"
         values = {
             self.cenit_model: obj._get_values ()
@@ -110,7 +111,8 @@ class CenitApi (object):
         raise Warning('Error trying to configure Cenit.')
 
     def get(self, cr, uid, path, context=None):
-        config = self.instance(uid, context)
+        config = self.instance(cr, uid, context)
+        
         r = requests.get (
             config.get ('cenit_url') + path,
             headers=self.headers (config)
@@ -160,6 +162,7 @@ class CenitApi (object):
             cr, uid, vals, context=context
         )
 
+        rc = False
         try:
             rc = self.cenit_push (cr, uid, obj_id, context=context)
         except requests.ConnectionError as e:
@@ -169,7 +172,7 @@ class CenitApi (object):
                 'message' :
                     _('Cenit refused the connection. It is probably down.')
             }
-            return {'warning': warning}
+            return False # {'warning': warning}
         except Exception as e:
             _logger.exception (e)
             warning = {
@@ -177,7 +180,7 @@ class CenitApi (object):
                 'message' :
                     _('Something wicked happened.')
             }
-            return {'warning': warning}
+            return False # {'warning': warning}
 
         if not rc:
             warning = {
@@ -185,7 +188,7 @@ class CenitApi (object):
                 'message' :
                     _('Something wicked happened.')
             }
-            return {'warning': warning}
+            return False # {'warning': warning}
 
         return obj_id
 
@@ -199,7 +202,7 @@ class CenitApi (object):
         res = super (CenitApi, self).write (
             cr, uid, ids, vals, context=context
         )
-
+        
         cp = vals.copy ()
         if cp.pop ('cenitID', False):
             if len (cp.keys ()) == 0:
@@ -216,7 +219,7 @@ class CenitApi (object):
                 'message' :
                     _('Cenit refused the connection. It is probably down.')
             }
-            return {'warning': warning}
+            return False # {'warning': warning}
         except Exception as e:
             _logger.exception (e)
             warning = {
@@ -224,16 +227,16 @@ class CenitApi (object):
                 'message' :
                     _('Something wicked happened.')
             }
-            return {'warning': warning}
+            return False # {'warning': warning}
 
-        if not rc:
-            warning = {
-                'title': _('Error!'),
-                'message' :
-                    _('Something wicked happened.')
-            }
-            return {'warning': warning}
-            
+        #~ if not rc:
+            #~ warning = {
+                #~ 'title': _('Error!'),
+                #~ 'message' :
+                    #~ _('Something wicked happened.')
+            #~ }
+            #~ return {'warning': warning}
+            #~ 
         return res
 
     def unlink(self, cr, uid, ids, context=None):
@@ -247,7 +250,7 @@ class CenitApi (object):
                     'message' :
                         _('Cenit refused the connection. It is probably down.')
                 }
-                return {'warning': warning}
+                return False # {'warning': warning}
             except Exception as e:
                 _logger.exception (e)
                 warning = {
@@ -255,7 +258,7 @@ class CenitApi (object):
                     'message' :
                         _('Something wicked happened.')
                 }
-                return {'warning': warning}
+                return False # {'warning': warning}
             if rc:
                 rc = super (CenitApi, self).unlink (
                     cr, uid, rec.id, context=context
@@ -267,7 +270,4 @@ class CenitApi (object):
                 'message' :
                     _('Something wicked happened.')
             }
-            return {'warning': warning}
-            
-        return rc
-
+            return False # {'warning': warning}
