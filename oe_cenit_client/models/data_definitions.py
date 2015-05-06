@@ -25,47 +25,46 @@
 import logging
 
 
-from openerp import models, fields
+from openerp import models, fields, api
 from openerp.addons.oe_cenit_client import cenit_api
 
 
 _logger = logging.getLogger(__name__)
 
 
-class CenitSchema (cenit_api.CenitApi, models.Model):
-    _name = 'cenit.schema'
-    cenit_model = 'schema'
-    cenit_models = 'schemas'
-
-    cenitID = fields.Char ('Cenit ID')
-
-    name = fields.Char (compute='_compute_name')
-    
-    library = fields.Many2one (
-        'cenit.library',
-        string = 'Library',
-        required = True,
-        ondelete = 'cascade'
-    )
-
-    uri = fields.Char ('URI', required=True)
-    schema = fields.Text ('Schema', required=True)
-
-    def _compute_name (self):
-        self.name = "%s | %s" %(self.library.name, self.uri)
-
-    def _get_values (self):
-        vals = {
-            'uri': self.uri,
-            'schema': self.schema,
-            'library': {
-                "id": self.library.cenitID
-            }
-        }
-        if self.cenitID:
-            vals.update ({'id': self.cenitID})
-
-        return vals
+#~ class CenitSchema (cenit_api.CenitApi, models.Model):
+    #~ _name = 'cenit.schema'
+    #~ cenit_model = 'schema'
+    #~ cenit_models = 'schemas'
+#~ 
+    #~ cenitID = fields.Char ('Cenit ID')
+#~ 
+    #~ name = fields.Char (compute='_compute_name')
+    #~ 
+    #~ uri = fields.Char ('URI', required=True)
+    #~ schema = fields.Text ('Schema', required=True)
+#~ 
+    #~ _sql_constraints = [
+        #~ ('lib_uri_uniq', 'UNIQUE(library, uri)', 'The Library|uri combo must be unique!'),
+    #~ ]
+#~ 
+#~ 
+    #~ @api.one
+    #~ def _compute_name (self):
+        #~ self.name = "%s | %s" %(self.library.name, self.uri)
+#~ 
+    #~ def _get_values (self):
+        #~ vals = {
+            #~ 'uri': self.uri,
+            #~ 'schema': self.schema,
+            #~ 'library': {
+                #~ "id": self.library.cenitID
+            #~ }
+        #~ }
+        #~ if self.cenitID:
+            #~ vals.update ({'id': self.cenitID})
+#~ 
+        #~ return vals
 
 
 class CenitLibrary (cenit_api.CenitApi, models.Model):
@@ -77,11 +76,15 @@ class CenitLibrary (cenit_api.CenitApi, models.Model):
     
     name = fields.Char ('Name', required=True)
 
-    schemas = fields.One2many (
-        'cenit.schema',
+    data_types = fields.One2many (
+        'cenit.data_type',
         'library',
-        string = 'Schemas'
+        string = 'Data Types'
     )
+
+    _sql_constraints = [
+        ('name_uniq', 'UNIQUE(name)', 'The name must be unique!'),
+    ]
 
     def _get_values (self):
         vals = {
@@ -93,25 +96,66 @@ class CenitLibrary (cenit_api.CenitApi, models.Model):
         return vals
 
 
-class CenitDataType (models.Model):
+# TODO: Assumptions
+#       1. The relation with Schema will be One2One
+class CenitDataType (cenit_api.CenitApi, models.Model):
     _name = 'cenit.data_type'
+    cenit_model = 'schema'
+    cenit_models = 'schemas'
 
-    name = fields.Char ('Name', size=128)
-    model = fields.Many2one ('ir.model', 'Model')
-    schema = fields.Many2one ('cenit.schema', 'Schema')
+    cenitID = fields.Char ('Cenit ID')
+    datatype_cenitID = fields.Char ('Cenit ID')
+
+    name = fields.Char ('Name', size=128, required=True)
+    library = fields.Many2one (
+        'cenit.library',
+        string = 'Library',
+        required = True,
+        ondelete = 'cascade'
+    )
+
+    model = fields.Many2one ('ir.model', 'Model', required=True)
+    schema = fields.Text ('Schema')
+    
     lines = fields.One2many ('cenit.data_type.line', 'data_type', 'Mapping')
 
+    _sql_constraints = [
+        ('name_uniq', 'UNIQUE(name)', 'The name must be unique!'),
+    ]
+
+    
+    def _get_values (self):
+        vals = {
+            'uri': "%s.json" %(self.name,),
+            'schema': self.schema,
+            'library': {
+                "id": self.library.cenitID
+            }
+        }
+        if self.cenitID:
+            vals.update ({'id': self.cenitID})
+
+        return vals
+    
     def __add_line (self, cr, uid, vals, context=None):
         line_pool = self.pool.get ('cenit.data_type.line')
-        line_id = line_pool.create (
+
+        line = line_pool.create (
             cr, uid, vals, context=context
         )
-        _logger.info ("\n\nAdding line with values: %s\n", vals)
+        _logger.info ("\n\nAdding line %s with values: %s\n", line, vals)
 
     def __match_type (self, line_type):
         return {
             u"": None
         }.get (line_type, "field")
+
+    def __get_cenitID (self, cr, uid, schema_id, context=None):
+        cenit = cenit_api.CenitApi ()
+        path = "/api/v1/data_type"
+
+        rc = cenit.get (cr, uid, path, context=context)
+        _logger.info ("\n\nRC: %s\n", rc)
 
     def create (self, cr, uid, vals, context=None):
         _logger.info ("\n\nCreating DataType with values: %s\n", vals)
@@ -139,6 +183,10 @@ class CenitDataType (models.Model):
                     # 'relation_field': f.relation_field,
                 }
                 self.__add_line (cr, uid, vals, context=context)
+        
+        #~ if obj._schema:
+            #~ self.__get_cenitID (cr, uid, obj._schema.cenitID, context=context)
+        
         return _id
 
 

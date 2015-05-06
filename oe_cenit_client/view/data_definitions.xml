@@ -5,6 +5,7 @@
         <menuitem id="menu_cenit_data_definitions" name="Data Definitions"
             parent="menu_cenit_integration" sequence="0" />
         
+<!--
         <record id="view_cenit_schema_tree" model="ir.ui.view">
             <field name="name">view.cenit.schema.tree</field>
             <field name="model">cenit.schema</field>
@@ -43,6 +44,7 @@
         <menuitem id="menu_cenit_schema" name="Schemas"
             parent="menu_cenit_data_definitions" sequence="0"
             action="action_cenit_schema" />
+-->
 
 
         <record id="view_cenit_data_type_tree" model="ir.ui.view">
@@ -52,7 +54,7 @@
                 <tree string="data_types" >
                     <field name="name"/>
                     <field name="model"/>
-                    <field name="schema"/>
+                    <field name="library"/>
                 </tree>
             </field>
         </record>
@@ -61,12 +63,12 @@
             <field name="name">view.cenit.data_type.form</field>
             <field name="model">cenit.data_type</field>
             <field name="arch" type="xml">
-                <form string="Data Type" version="7.0">
+                <form string="Data Type">
                     <sheet>
                         <group>
                             <field name="name"/>
                             <field name="model"/>
-                            <field name="schema"/>
+                            <field name="library"/>
                         </group>
                         <notebook>
                             <page string="Mapping">
@@ -80,6 +82,9 @@
                                         <field name="primary" />
                                     </tree>
                                 </field>
+                            </page>
+                            <page string="Schema">
+                                <field name="schema" />
                             </page>
                         </notebook>
                     </sheet>
@@ -117,13 +122,7 @@
                 <form string="Library">
                     <group>
                         <field name="name" />
-                        <field name="schemas" widget="one2many_list"
-                               class="oe_inline oe_no_button"
-                               context="{'library_id': active_id}">
-                            <tree>
-                                <field name="uri" />
-                            </tree>
-                        </field>
+                        <field name="data_types" />
                     </group>
                 </form>
             </field>
