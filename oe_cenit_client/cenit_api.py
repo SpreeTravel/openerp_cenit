@@ -107,7 +107,8 @@ class CenitApi (object):
         )
         if 200 <= r.status_code < 300:
             return simplejson.loads (r.content)
-
+        
+        _logger.exception (simplejson.loads (r.content))
         raise Warning('Error trying to configure Cenit.')
 
     def get(self, cr, uid, path, context=None):

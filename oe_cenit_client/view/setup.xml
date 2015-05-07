@@ -242,10 +242,10 @@
                             <field name="name" />
                             <field name="execution" />
                             <field name="cenit_translator" />
+                            <field name="scope" />
                         </group>
                         <group>
                             <field name="data_type" />
-                            <field name="scope" />
                             <field name="connection_role" />
                             <field name="webhook" />
                         </group>
