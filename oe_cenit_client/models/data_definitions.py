@@ -150,15 +150,22 @@ class CenitDataType (cenit_api.CenitApi, models.Model):
             u"": None
         }.get (line_type, "field")
 
-    def __get_cenitID (self, cr, uid, schema_id, context=None):
-        cenit = cenit_api.CenitApi ()
+    def __get_dt_cenitID (self, cr, uid, obj, context=None):
         path = "/api/v1/data_type"
 
-        rc = cenit.get (cr, uid, path, context=context)
-        _logger.info ("\n\nRC: %s\n", rc)
+        rc = self.get (cr, uid, path, context=context)
+
+        for item in rc:
+            if item['schema_id']['id'] == obj.cenitID:
+                vals = {'datatype_cenitID': item['id']}
+                self.write (cr, uid, obj.id, vals, context=context)
+                return
+                
 
     def create (self, cr, uid, vals, context=None):
-        _logger.info ("\n\nCreating DataType with values: %s\n", vals)
+        if not vals.get ('schema', False):
+            vals.update ({'schema': '{}'})
+        
         _id = super (CenitDataType, self).create (
             cr, uid, vals, context=context
         )
@@ -184,9 +191,9 @@ class CenitDataType (cenit_api.CenitApi, models.Model):
                 }
                 self.__add_line (cr, uid, vals, context=context)
         
-        #~ if obj._schema:
-            #~ self.__get_cenitID (cr, uid, obj._schema.cenitID, context=context)
-        
+        if obj.cenitID:
+            self.__get_dt_cenitID (cr, uid, obj, context=context)
+
         return _id
 
 

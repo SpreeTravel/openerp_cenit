@@ -97,7 +97,6 @@ class CenitConnection (cenit_api.CenitApi, models.Model):
             })
         vals.update ({'template_parameters': template})
             
-        _logger.info ("\n\nReturning values: %s\n", vals)
         return vals
 
     def _calculate_update (self, values):
@@ -143,18 +142,17 @@ class CenitConnectionRole (cenit_api.CenitApi, models.Model):
         if self.cenitID:
             vals.update ({'id': self.cenitID})
 
+        _reset = []
+
         connections = []
         for conn in self.connections:
             connections.append (conn._get_values ())
-            #~ if conn.cenitID:
-                #~ connections.append ({
-                    #~ "id": conn.cenitID
-                #~ })
-            #~ else:
 
         vals.update ({
             'connections': connections
         })
+        _reset.append ('connections')
+            
         
         webhooks = []
         for hook in self.webhooks:
@@ -163,8 +161,12 @@ class CenitConnectionRole (cenit_api.CenitApi, models.Model):
         vals.update ({
             'webhooks': webhooks
         })
+        _reset.append ('webhooks')
+
+        vals.update ({
+            '_reset': _reset
+        })
         
-        _logger.info ("\n\nReturning values: %s\n", vals)
         return vals
 
 
@@ -286,27 +288,28 @@ class CenitWebhook (cenit_api.CenitApi, models.Model):
             })
         vals.update ({'template_parameters': template})
 
-        _logger.info ("\n\nReturning values: %s\n", vals)
         return vals
 
 
 class CenitFlow (cenit_api.CenitApi, models.Model):
 
-    def _get_translators (self, *args, **kwargs): #, cr, uid, context=None):
-        cenit = cenit_api.CenitApi ()
+    def _get_translators (self): #, cr, uid, context=None):
         path = "/api/v1/translator"
 
-        rc = cenit.get (
+        rc = self.get (
             self.env.cr,
             self.env.uid,
             path,
-            context=self.env.context
-        )
+            context=self.env.context)
+
+        if not isinstance (rc, list):
+            rc = [rc]
 
         values = []
         
         for item in rc:
-            it = item.get ("translator")
+            _logger.info ("\n\nITEM: %s\n", item)
+            it = item #.get ("translator")
             values.append ((it.get('id'), it.get('name')))
 
         return values
@@ -338,10 +341,10 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
     )
     scope = fields.Selection (
         [
-            ('src', 'Event source'),
-            ('all', 'All sources'),
+            ('Event', 'Event source'),
+            ('All', 'All sources'),
         ],
-        'Source scope', default='src', required=True
+        'Source scope', default='Event', required=True
     )
     
     connection_role = fields.Many2one (
@@ -365,15 +368,40 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
     def _get_values (self):
         vals = {
             'name': self.name,
+            'active': True,
+            'discard_events': False,
+            'data_type_scope': self.scope,
         }
 
         if self.cenitID:
             vals.update ({'id': self.cenitID})
 
+        if self.execution not in ('only_manual', 'interval'):
+            event = {
+                '_type': "Setup::Observer",
+                'name': "%s > %s" % (self.data_type.name, self.execution),
+                'data_type': {'id': self.data_type.datatype_cenitID},
+                'triggers': {
+                    'on_create': '{"created_at":{"0":{"o":"_not_null","v":["","",""]}}}',
+                    'on_write': '{"updated_at":{"0":{"o":"_presence_change","v":["","",""]}}}',
+                    'on_create_or_write': '{"updated_at":{"0":{"o":"_change","v":["","",""]}}}',
+                } [self.execution]
+            }
+            vals.update ({
+                'event': event
+            })
+
         if self.cenit_translator:
             vals.update({
                 'translator': {
                     'id': self.cenit_translator
+                }
+            })
+
+        if self.data_type.datatype_cenitID:
+            vals.update ({
+                'custom_data_type': {
+                    'id': self.data_type.datatype_cenitID
                 }
             })
 
@@ -391,7 +419,6 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
                 }
             })
 
-        _logger.info ("\n\nReturning values: %s\n", vals)
         return vals
 
     #~ method = fields.Selection (
