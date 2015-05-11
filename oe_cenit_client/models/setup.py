@@ -324,14 +324,18 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
     name = fields.Char ('Name', size=64, required=True, unique=True)
     execution = fields.Selection (
         [
-            ('only_manual', 'Only Manual'),
-            ('interval', 'Interval'),
+            #~ ('only_manual', 'Only Manual'),
+            #~ ('interval', 'Interval'),
             ('on_create', 'On Create'),
             ('on_write', 'On Update'),
             ('on_create_or_write', 'On Create & Update')
         ],
-        'Execution', default='only_manual', required=True
+        'Execution', default='on_create_or_write', required=True
     )
+    #~ cron = fields.Many2one (
+        #~ 'ir.cron', 'Cron rules'
+    #~ )
+    
     cenit_translator = fields.Selection (
         _get_translators, string="Translator", required=True
     )
@@ -421,6 +425,16 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
 
         return vals
 
+    def on_connection_role_changed (self, cr, uid, ids, role_id, context=None):
+        role = self.pool.get ("cenit.connection.role").browse (
+            cr, uid, role_id, context=context
+        )
+        hook_ids = [x.id for x in role.webhooks]
+        domain = {"webhook":[('id', 'in', hook_ids)]}
+        rc = {'value': {'webhook': ""}, "domain": domain}
+
+        return rc
+
     #~ method = fields.Selection (
         #~ [
             #~ ('http_post', 'HTTP POST'),
@@ -436,8 +450,9 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
         #~ 'ir.cron', 'Action Cron'
     #~ )
 #~ 
-    #~ def create(self, cr, uid, vals, context=None):
+    #~ def create (self, cr, uid, vals, context=None):
         #~ obj_id = super(cenit_api.CenitApi, self).create(cr, uid, vals, context)
+        #~ _logger.info ("\n\nVals are: %s\n", vals)
         #~ method = 'set_%s_execution' % vals['purpose']
         #~ getattr(self, method)(cr, uid, [obj_id], context)
         #~ return obj_id

@@ -241,13 +241,19 @@
                         <group>
                             <field name="name" />
                             <field name="execution" />
+<!--
+                            <field name="cron"
+                                   attrs="{ 'required':[('execution','!=','interval')], 'invisible':[('execution','!=','interval')]}" />
+-->
                             <field name="cenit_translator" />
-                            <field name="scope" />
                         </group>
                         <group>
                             <field name="data_type" />
-                            <field name="connection_role" />
-                            <field name="webhook" />
+                            <field name="scope" />
+                            <field name="connection_role" on_change="on_connection_role_changed(connection_role)"/>
+                            <field name="webhook"
+                                   attrs="{'invisible':[('connection_role','=',False)]}"
+                                   options="{'no_quick_create':True,'no_create_edit':True}" />
                         </group>
                     </group>
                 </form>
