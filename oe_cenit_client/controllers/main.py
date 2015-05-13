@@ -1,13 +1,18 @@
         # -*- coding: utf-8 -*-
 
+import logging
+
 from openerp import http
 from openerp.http import request
+
+_logger = logging.getLogger(__name__)
 
 
 class WebhookController(http.Controller):
 
     @http.route('/cenit/<string:path>', type='json', auth='none')
     def consume(self, path):
+        _logger.info ("\n\nConsuming %s\n", path)
         db = request.httprequest.headers.environ['HTTP_X-Hub-Store']
         pwd = request.httprequest.headers.environ['HTTP_X-Hub-Access-Token']
         if db in http.db_list():

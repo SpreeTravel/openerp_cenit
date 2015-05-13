@@ -60,7 +60,7 @@ class CenitApi (object):
         return update
 
     def cenit_push (self, cr, uid, _id, context=None):
-        obj = self.browse(cr, uid, _id, context=context)
+        obj = self.browse (cr, uid, _id, context=context)
         
         path = "/api/v1/push"
         values = {
@@ -73,7 +73,10 @@ class CenitApi (object):
             rc = self.post (cr, uid, path, values, context=context)
             _logger.info ("\n\nResponse received: %s\n", rc)
             update = self._calculate_update (rc)
-            rc = self.write (cr, uid, obj.id, update, context={'noPush':True})
+            if not isinstance (context, dict):
+                context = {}
+            context.update ({'noPush':True})
+            rc = self.write (cr, uid, obj.id, update, context=context)
         except Warning as e:
             _logger.exception (e)
 
@@ -159,9 +162,18 @@ class CenitApi (object):
         }
 
     def create (self, cr, uid, vals, context=None):
+        _logger.info ('\n\nCreating with context: %s\n', context)
         obj_id = super (CenitApi, self).create (
             cr, uid, vals, context=context
         )
+
+        local = False
+        if isinstance (context, dict):
+            local = context.get ('local', False)
+
+        _logger.info ('\n\nLocal?: %s\n', local)
+        if local:
+            return obj_id
 
         rc = False
         try:
@@ -194,12 +206,14 @@ class CenitApi (object):
         return obj_id
 
     def write (self, cr, uid, ids, vals, context=None):
+        _logger.info ('\n\nWriting with context: %s\n', context)
         push = True
         if isinstance (context, dict):
             push = not (context.get ('noPush', False))
         
         if isinstance (ids, (int, long)):
             ids = [ids]
+        
         res = super (CenitApi, self).write (
             cr, uid, ids, vals, context=context
         )

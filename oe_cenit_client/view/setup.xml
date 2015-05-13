@@ -243,9 +243,11 @@
                             <field name="execution" />
 <!--
                             <field name="cron"
-                                   attrs="{ 'required':[('execution','!=','interval')], 'invisible':[('execution','!=','interval')]}" />
+                                   attrs="{ 'required':[('execution','=','interval')], 'invisible':[('execution','!=','interval')]}" />
 -->
-                            <field name="cenit_translator" />
+                            <field name="format_" />
+                            <field name="local" attrs="{'invisible': True}"/>
+                            <field name="cenit_translator" attrs="{'invisible':[('local','=',True)],'required':[('local','=',False)]}"/>
                         </group>
                         <group>
                             <field name="data_type" />

@@ -23,6 +23,8 @@
 #  
 
 import logging
+import requests
+import simplejson
 
 from openerp import models, fields, api
 from openerp.addons.oe_cenit_client import cenit_api
@@ -320,6 +322,7 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
     cenit_models = 'flows'
 
     cenitID = fields.Char ('Cenit ID')
+    event_cenitID = fields.Char ('Cenit Event ID')
 
     name = fields.Char ('Name', size=64, required=True, unique=True)
     execution = fields.Selection (
@@ -336,8 +339,16 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
         #~ 'ir.cron', 'Cron rules'
     #~ )
     
+    format_ = fields.Selection (
+        [
+            ('json', 'JSON'),
+            ('edi', 'EDI')
+        ],
+        'Format',default='json', required=True
+    )
+    local = fields.Boolean ('Bypass Cenit', default=False)
     cenit_translator = fields.Selection (
-        _get_translators, string="Translator", required=True
+        _get_translators, string="Translator"
     )
 
     data_type = fields.Many2one (
@@ -365,6 +376,8 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
         'cenit.data_type', 'Response data type'
     )
 
+    base_action_rule = fields.Many2one('base.action.rule', 'Action Rule')
+
     _sql_constraints = [
         ('name_uniq', 'UNIQUE(name)', 'The name must be unique!'),
     ]
@@ -391,6 +404,9 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
                     'on_create_or_write': '{"updated_at":{"0":{"o":"_change","v":["","",""]}}}',
                 } [self.execution]
             }
+            if self.event_cenitID:
+                event.update ({'id': self.event_cenitID})
+            
             vals.update ({
                 'event': event
             })
@@ -425,6 +441,17 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
 
         return vals
 
+    def _calculate_update (self, values):
+        update = {}
+        for k,v in values.items ():
+            if k == "%s" % (self.cenit_models):
+                update = {
+                    'cenitID': v[0] ['id'],
+                    'event_cenitID': v[0] ['event_id']['id']
+                }
+
+        return update
+    
     def on_connection_role_changed (self, cr, uid, ids, role_id, context=None):
         role = self.pool.get ("cenit.connection.role").browse (
             cr, uid, role_id, context=context
@@ -450,20 +477,31 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
         #~ 'ir.cron', 'Action Cron'
     #~ )
 #~ 
-    #~ def create (self, cr, uid, vals, context=None):
-        #~ obj_id = super(cenit_api.CenitApi, self).create(cr, uid, vals, context)
-        #~ _logger.info ("\n\nVals are: %s\n", vals)
-        #~ method = 'set_%s_execution' % vals['purpose']
-        #~ getattr(self, method)(cr, uid, [obj_id], context)
-        #~ return obj_id
+    def create (self, cr, uid, vals, context=None):
+        _logger.info ("\n\nCreating Flow with %s\n", vals)
+        if context is None:
+            context={}
+        context.update ({'local': vals['local']})
+
+        obj_id = super(CenitFlow, self).create(cr, uid, vals, context)
+
+        hook = self.pool.get ('cenit.webhook').browse (
+            cr, uid, vals['webhook'], context=context
+        )
+        purpose = hook.purpose
+        
+        method = 'set_%s_execution' % (purpose, )
+        getattr(self, method)(cr, uid, [obj_id], context)
+        
+        return obj_id
 #~ 
-    #~ def write(self, cr, uid, ids, vals, context=None):
-        #~ res = super(CenitFlow, self).write(cr, uid, ids, vals, context)
-        #~ if vals.get('execution', False):
-            #~ for obj in self.browse(cr, uid, ids):
-                #~ method = 'set_%s_execution' % obj.purpose
-                #~ getattr(self, method)(cr, uid, [obj.id], context)
-        #~ return res
+    def write(self, cr, uid, ids, vals, context=None):
+        res = super(CenitFlow, self).write(cr, uid, ids, vals, context)
+        if vals.get('execution', False):
+            for obj in self.browse(cr, uid, ids):
+                method = 'set_%s_execution' % obj.webhook.purpose
+                getattr(self, method)(cr, uid, [obj.id], context)
+        return res
 #~ 
     #~ def unlink(self, cr, uid, ids, context=None):
         #~ ref_obj = self.pool.get('cenit.flow.reference')
@@ -505,11 +543,11 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
                 #~ res = True
         #~ return res
 #~ 
-    #~ def set_send_execution(self, cr, uid, ids, context=None):
-        #~ obj = self.browse(cr, uid, ids[0], context)
+    def set_send_execution(self, cr, uid, ids, context=None):
+        obj = self.browse(cr, uid, ids[0], context)
         #~ ic_obj = self.pool.get('ir.cron')
-        #~ ias_obj = self.pool.get('ir.actions.server')
-        #~ bar_obj = self.pool.get('base.action.rule')
+        ias_obj = self.pool.get('ir.actions.server')
+        bar_obj = self.pool.get('base.action.rule')
         #~ if obj.execution == 'only_manual':
             #~ if obj.base_action_rule_id:
                 #~ bar_obj.unlink(cr, uid, obj.base_action_rule_id.id)
@@ -533,44 +571,47 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
                 #~ if obj.base_action_rule_id:
                     #~ bar_obj.unlink(cr, uid, obj.base_action_rule_id.id)
         #~ elif obj.execution in ['on_create', 'on_write', 'on_create_or_write']:
-            #~ if obj.base_action_rule_id:
-                #~ bar_obj.write(cr, uid, obj.base_action_rule_id.id,
-                              #~ {'kind': obj.execution})
-            #~ else:
-                #~ vals_ias = {
-                    #~ 'name': 'push_%s' % obj.model_id.model,
-                    #~ 'model_id': obj.model_id.id,
-                    #~ 'state': 'code',
-                    #~ 'code': "self.pool.get('cenit.flow').send(cr, uid, obj)"
-                #~ }
-                #~ ias_id = ias_obj.create(cr, uid, vals_ias)
-                #~ vals_bar = {
-                    #~ 'name': 'push_%s' % obj.model_id.model,
-                    #~ 'active': True,
-                    #~ 'kind': obj.execution,
-                    #~ 'model_id': obj.model_id.id,
-                    #~ 'server_action_ids': [(6, 0, [ias_id])]
-                #~ }
-                #~ bar_id = bar_obj.create(cr, uid, vals_bar)
-                #~ self.write(cr, uid, obj.id, {'base_action_rule_id': bar_id})
+        if obj.execution in ['on_create', 'on_write', 'on_create_or_write']:
+            if obj.base_action_rule:
+                bar_obj.write(cr, uid, obj.base_action_rule.id,
+                              {'kind': obj.execution})
+            else:
+                vals_ias = {
+                    'name': 'push_%s' % obj.data_type.model.model,
+                    'model_id': obj.data_type.model.id,
+                    'state': 'code',
+                    'code': "self.pool.get('cenit.flow').send(cr, uid, obj, %s)" % (obj.id,)
+                }
+                ias_id = ias_obj.create(cr, uid, vals_ias)
+                vals_bar = {
+                    'name': 'push_%s' % obj.data_type.model.model,
+                    'active': True,
+                    'kind': obj.execution,
+                    'model_id': obj.data_type.model.id,
+                    'server_action_ids': [(6, 0, [ias_id])]
+                }
+                bar_id = bar_obj.create(cr, uid, vals_bar)
+                self.write(cr, uid, obj.id, {'base_action_rule': bar_id})
                 #~ if obj.ir_cron_id:
                     #~ ic_obj.unlink(cr, uid, obj.ir_cron_id.id)
-        #~ return True
+        return True
 #~ 
-    #~ def send(self, cr, uid, model_obj, context=None):
-        #~ domain = [('model_id.model', '=', model_obj._name),
-                  #~ ('purpose', '=', 'send')]
+    def send(self, cr, uid, model, flow_id, context=None):
+        #~ domain = [('data_type.model', '=', model_obj._name),
+                  #~ ('webhook.purpose', '=', 'send')]
         #~ flow_obj_ids = self.search(cr, uid, domain, context=context)
-        #~ if flow_obj_ids:
+        _logger.info ('\n\nSending flow %s\n', flow_id)
+        flow = self.browse (cr, uid, flow_id, context=context)
+        if flow:
             #~ flow_obj = self.browse(cr, uid, flow_obj_ids[0])
-            #~ if flow_obj.format == 'json':
-                #~ ws = self.pool.get('cenit.serializer')
-                #~ data = [ws.serialize(cr, uid, model_obj)]
-            #~ elif flow_obj.format == 'edi':
-                #~ data = self.pool.get(model_obj._name).edi_export(cr, uid,
-                                                                 #~ [model_obj])
-            #~ return self._send(cr, uid, flow_obj, data, context)
-        #~ return False
+            if flow.format_ == 'json':
+                ws = self.pool.get('cenit.serializer')
+                data = [ws.serialize(cr, uid, model)]
+            elif flow.format_ == 'edi':
+                data = self.pool.get(model._name).edi_export(
+                    cr, uid, [model])
+            return self._send(cr, uid, flow.data_type, data, context)
+        return False
 #~ 
     #~ def send_all(self, cr, uid, ids, context=None):
         #~ obj = self.browse(cr, uid, ids[0])
@@ -588,13 +629,16 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
                 #~ return self._send(cr, uid, obj, models, context)
         #~ return False
 #~ 
-    #~ def _send(self, cr, uid, obj, data, context=None):
-        #~ return getattr(self, obj.method)(cr, uid, obj, data, context)
-#~ 
-    #~ def http_post(self, cr, uid, obj, data, context=None):
-        #~ client = self.pool.get('cenit.client').instance(cr, uid, context)
+    def _send(self, cr, uid, obj, data, context=None):
+        method = "http_post"
+        #~ if local:
+            #~ method = "local_http"
+        return getattr(self, method)(cr, uid, obj, data, context)
+
+    def http_post(self, cr, uid, obj, data, context=None):
+        #~ config = self.instance(cr, uid, context)
         #~ p = inflect.engine()
-        #~ payload = simplejson.dumps({p.plural(obj.root.lower()): data})
+        #~ payload = simplejson.dumps({obj.cenit_root: data})
         #~ headers = {
             #~ 'Content-Type': 'application/json',
             #~ 'X-Hub-Store': client.connection_key,
@@ -603,6 +647,19 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
         #~ url = client.url + '/cenit'
         #~ r = requests.post(url, data=payload, headers=headers)
         #~ return r.status_code
+        values = {obj.cenit_root: data}
+        path = "/api/v1/push"
+        
+        rc = False
+        _logger.info ("\n\nHTTP Posting to Cenit values: %s\n", values)
+        try:
+            rc = self.post (cr, uid, path, values, context=context)
+            _logger.info ("\n\nResponse received: %s\n", rc)
+        except Warning as e:
+            _logger.exception (e)
+
+        return rc
+
 #~ 
     #~ def local_post(self, cr, uid, obj, data, context=None):
         #~ db = context.get('partner_db')
