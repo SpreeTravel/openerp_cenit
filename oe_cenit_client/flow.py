@@ -22,7 +22,7 @@ import requests
 import simplejson
 import inflect
 import openerp
-from openerp import models, fields, SUPERUSER_ID as SI
+from openerp import models, fields, api, SUPERUSER_ID as SI
 from openerp.addons.saas_utils import connector
 
 
@@ -156,6 +156,7 @@ class CenitFlow(models.Model):
                     ic_obj.unlink(cr, uid, obj.ir_cron_id.id)
         return True
 
+    @api.cr_uid_context
     def send(self, cr, uid, model_obj, context=None):
         domain = [('model_id.model', '=', model_obj._name),
                   ('purpose', '=', 'send')]
@@ -208,9 +209,11 @@ class CenitFlow(models.Model):
         if db:
             registry = openerp.modules.registry.RegistryManager.get(db)
             with registry.cursor() as db_cr:
-                uids = registry['res.users'].search(db_cr, SI,
-                                                [('oauth_uid', '!=', False)])
-                ruid = uids and uids[0] or SI
+                ruid = context.get('user', False)
+                if not ruid:
+                    domain = [('oauth_uid', '!=', False)]
+                    uids = registry['res.users'].search(db_cr, SI, domain)
+                    ruid = uids and uids[0] or SI
                 model = obj.root.lower()
                 return registry['cenit.flow'].receive(db_cr, ruid, model, data)
 
