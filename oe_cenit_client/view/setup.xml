@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-        
+
         <menuitem id="menu_cenit_setup" name="Setup"
             parent="menu_cenit_integration" sequence="1" />
 
@@ -16,7 +16,7 @@
                 </tree>
             </field>
         </record>
-        
+
         <record id="view_cenit_connection_form" model="ir.ui.view">
             <field name="name">view.cenit.connection.form</field>
             <field name="model">cenit.connection</field>
@@ -67,20 +67,20 @@
                 </form>
             </field>
         </record>
-        
+
         <record id="action_cenit_connection" model="ir.actions.act_window">
-            <field name="name">Connections</field>            
-            <field name="type">ir.actions.act_window</field>            
+            <field name="name">Connections</field>
+            <field name="type">ir.actions.act_window</field>
             <field name="res_model">cenit.connection</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
         </record>
-        
+
         <menuitem id="menu_cenit_connection" name="Connections"
             parent="menu_cenit_setup" sequence="0"
             action="action_cenit_connection" />
 
-        
+
         <record id="view_cenit_connection_role_tree" model="ir.ui.view">
             <field name="name">view.cenit.connection.role.tree</field>
             <field name="model">cenit.connection.role</field>
@@ -90,7 +90,7 @@
                 </tree>
             </field>
         </record>
-        
+
         <record id="view_cenit_connection_role_form" model="ir.ui.view">
             <field name="name">view.cenit.connection.role.form</field>
             <field name="model">cenit.connection.role</field>
@@ -123,15 +123,15 @@
                 </form>
             </field>
         </record>
-        
+
         <record id="action_cenit_connection_role" model="ir.actions.act_window">
-            <field name="name">Roles</field>            
-            <field name="type">ir.actions.act_window</field>            
+            <field name="name">Roles</field>
+            <field name="type">ir.actions.act_window</field>
             <field name="res_model">cenit.connection.role</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
         </record>
-        
+
         <menuitem id="menu_cenit_connection_role" name="Connection Roles"
             parent="menu_cenit_setup" sequence="1"
             action="action_cenit_connection_role" />
@@ -246,16 +246,25 @@
                                    attrs="{ 'required':[('execution','=','interval')], 'invisible':[('execution','!=','interval')]}" />
 -->
                             <field name="format_" />
-                            <field name="local" attrs="{'invisible': True}"/>
-                            <field name="cenit_translator" attrs="{'invisible':[('local','=',True)],'required':[('local','=',False)]}"/>
+<!--
+                                   on_change="on_webhook_format_changed(webhook, format_)"/>
+-->
+                            <field name="local"
+                                   attrs="{'invisible': True}"/>
+                            <field name="cenit_translator"
+                                   attrs="{'invisible':[('local','=',True),('webhook','=',False)],'required':[('local','=',False)]}"/>
                         </group>
                         <group>
                             <field name="data_type" />
                             <field name="scope" />
-                            <field name="connection_role" on_change="on_connection_role_changed(connection_role)"/>
+                            <field name="connection_role"
+                                   on_change="on_connection_role_changed(connection_role)"/>
                             <field name="webhook"
                                    attrs="{'invisible':[('connection_role','=',False)]}"
                                    options="{'no_quick_create':True,'no_create_edit':True}" />
+<!--
+                                   on_change="on_webhook_format_changed(webhook, format_)"/>
+-->
                         </group>
                     </group>
                 </form>

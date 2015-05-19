@@ -2,25 +2,25 @@
 # -*- coding: utf-8 -*-
 #
 #  connection.py
-#  
+#
 #  Copyright 2015 D.H. Bahr <dhbahr@gmail.com>
-#  
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
-#  
-#  
+#
+#
 
 import logging
 import requests
@@ -28,6 +28,8 @@ import simplejson
 
 from openerp import models, fields, api
 from openerp.addons.oe_cenit_client import cenit_api
+
+from datetime import datetime
 
 
 _logger = logging.getLogger(__name__)
@@ -39,7 +41,7 @@ class CenitConnection (cenit_api.CenitApi, models.Model):
     cenit_models = 'connections'
 
     cenitID = fields.Char ('Cenit ID')
-    
+
     name = fields.Char ('Name', required=True)
     url = fields.Char ('URL', required=True)
 
@@ -98,7 +100,7 @@ class CenitConnection (cenit_api.CenitApi, models.Model):
                 'value': tpl.value
             })
         vals.update ({'template_parameters': template})
-            
+
         return vals
 
     def _calculate_update (self, values):
@@ -107,11 +109,33 @@ class CenitConnection (cenit_api.CenitApi, models.Model):
             if k == "%s" % (self.cenit_models):
                 update = {
                     'cenitID': v[0] ['id'],
-                    'key': v[0] ['number'],
-                    'token': v[0] ['token'],
                 }
 
         return update
+
+    @api.one
+    def _get_conn_data (self):
+        path = "/api/v1/connection/%s" % self.cenitID
+
+        rc = self.get (path)
+
+        _logger.info (rc)
+        vals = {
+            'key': rc['connection']['number'],
+            'token': rc['connection']['token'],
+        }
+        self.with_context (noPush=True).write (vals)
+        return
+
+    @api.model
+    def create (self, vals):
+        _id = super (CenitConnection, self).create (vals)
+        obj = self.browse (_id)
+
+        if obj.cenitID:
+            obj._get_conn_data ()
+
+        return _id
 
 
 class CenitConnectionRole (cenit_api.CenitApi, models.Model):
@@ -120,7 +144,7 @@ class CenitConnectionRole (cenit_api.CenitApi, models.Model):
     cenit_models = 'connection_roles'
 
     cenitID = fields.Char ('Cenit ID')
-    
+
     name = fields.Char ('Name', required=True)
 
     connections = fields.Many2many (
@@ -154,8 +178,8 @@ class CenitConnectionRole (cenit_api.CenitApi, models.Model):
             'connections': connections
         })
         _reset.append ('connections')
-            
-        
+
+
         webhooks = []
         for hook in self.webhooks:
             webhooks.append (hook._get_values ())
@@ -168,7 +192,7 @@ class CenitConnectionRole (cenit_api.CenitApi, models.Model):
         vals.update ({
             '_reset': _reset
         })
-        
+
         return vals
 
 
@@ -182,12 +206,12 @@ class CenitParameter (models.Model):
         'cenit.connection',
         string = 'Connection'
     )
-    
+
     conn_header_id = fields.Many2one (
         'cenit.connection',
         string = 'Connection'
     )
-    
+
     conn_template_id = fields.Many2one (
         'cenit.connection',
         string = 'Connection'
@@ -295,27 +319,26 @@ class CenitWebhook (cenit_api.CenitApi, models.Model):
 
 class CenitFlow (cenit_api.CenitApi, models.Model):
 
-    def _get_translators (self): #, cr, uid, context=None):
+    def _get_translators (self, format_=None, dir_=None):
         path = "/api/v1/translator"
 
-        rc = self.get (
-            self.env.cr,
-            self.env.uid,
-            path,
-            context=self.env.context)
+        rc = self.get (path)
 
         if not isinstance (rc, list):
             rc = [rc]
 
         values = []
-        
+
         for item in rc:
-            _logger.info ("\n\nITEM: %s\n", item)
-            it = item #.get ("translator")
+            it = item.get ("translator")
+            if format_ and (it.get ('mime_type', '') != format_):
+                continue
+            if dir_ and (it.get ('type', '') != dir_):
+                continue
             values.append ((it.get('id'), it.get('name')))
 
         return values
-    
+
     _name = "cenit.flow"
 
     cenit_model = 'flow'
@@ -338,13 +361,13 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
     #~ cron = fields.Many2one (
         #~ 'ir.cron', 'Cron rules'
     #~ )
-    
+
     format_ = fields.Selection (
         [
-            ('json', 'JSON'),
-            ('edi', 'EDI')
+            ('application/json', 'JSON'),
+            ('application/EDI-X12', 'EDI')
         ],
-        'Format',default='json', required=True
+        'Format',default='application/json', required=True
     )
     local = fields.Boolean ('Bypass Cenit', default=False)
     cenit_translator = fields.Selection (
@@ -361,14 +384,14 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
         ],
         'Source scope', default='Event', required=True
     )
-    
+
     connection_role = fields.Many2one (
         'cenit.connection.role', 'Connection role', required=True
     )
     webhook = fields.Many2one (
         'cenit.webhook', 'Webhook', required=True
     )
-    
+
     cenit_response_translator = fields.Selection (
         _get_translators, string="Response translator"
     )
@@ -396,7 +419,12 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
         if self.execution not in ('only_manual', 'interval'):
             event = {
                 '_type': "Setup::Observer",
-                'name': "%s > %s" % (self.data_type.name, self.execution),
+                'name': "%s::%s > %s @ %s" % (
+                    self.data_type.library.name,
+                    self.data_type.name,
+                    self.execution,
+                    datetime.now ().ctime ()
+                ),
                 'data_type': {'id': self.data_type.datatype_cenitID},
                 'triggers': {
                     'on_create': '{"created_at":{"0":{"o":"_not_null","v":["","",""]}}}',
@@ -406,7 +434,7 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
             }
             if self.event_cenitID:
                 event.update ({'id': self.event_cenitID})
-            
+
             vals.update ({
                 'event': event
             })
@@ -447,11 +475,11 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
             if k == "%s" % (self.cenit_models):
                 update = {
                     'cenitID': v[0] ['id'],
-                    'event_cenitID': v[0] ['event_id']['id']
+                    #~ 'event_cenitID': v[0] ['event_id']['id']
                 }
 
         return update
-    
+
     def on_connection_role_changed (self, cr, uid, ids, role_id, context=None):
         role = self.pool.get ("cenit.connection.role").browse (
             cr, uid, role_id, context=context
@@ -462,6 +490,18 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
 
         return rc
 
+    @api.onchange('webhook', 'format_')
+    def on_webhook_format_changed (self):
+        dir_ = {
+            'send': 'Export',
+            'receive': 'Import',
+        }.get (self.webhook.purpose, '')
+        values = self._get_translators (self.format_, dir_)
+        self._columns['cenit_translator'].selection = values
+        #~ self.cenit_translator = values[0][0]
+        #~ if self.cenit_translator:
+            #~ self.cenit_translator.selection = values
+
     #~ method = fields.Selection (
         #~ [
             #~ ('http_post', 'HTTP POST'),
@@ -469,16 +509,15 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
             #~ ('file_post', 'FILE POST')
         #~ ], 'Method', default='http_post'
     #~ )
-#~ 
+#~
     #~ base_action_rule = fields.Many2one (
         #~ 'base.action.rule', 'Action Rule'
     #~ )
     #~ ir_cron = fields.Many2one (
         #~ 'ir.cron', 'Action Cron'
     #~ )
-#~ 
+#~
     def create (self, cr, uid, vals, context=None):
-        _logger.info ("\n\nCreating Flow with %s\n", vals)
         if context is None:
             context={}
         context.update ({'local': vals['local']})
@@ -489,12 +528,12 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
             cr, uid, vals['webhook'], context=context
         )
         purpose = hook.purpose
-        
+
         method = 'set_%s_execution' % (purpose, )
         getattr(self, method)(cr, uid, [obj_id], context)
-        
+
         return obj_id
-#~ 
+#~
     def write(self, cr, uid, ids, vals, context=None):
         res = super(CenitFlow, self).write(cr, uid, ids, vals, context)
         if vals.get('execution', False):
@@ -502,20 +541,23 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
                 method = 'set_%s_execution' % obj.webhook.purpose
                 getattr(self, method)(cr, uid, [obj.id], context)
         return res
-#~ 
-    #~ def unlink(self, cr, uid, ids, context=None):
-        #~ ref_obj = self.pool.get('cenit.flow.reference')
-        #~ for oid in ids:
-            #~ ref_ids = ref_obj.search(cr, uid, [('flow_id', '=', oid)])
-            #~ if ref_ids:
-                #~ ref_obj.unlink(cr, uid, ref_ids)
-        #~ return super(CenitFlow, self).unlink(cr, uid, ids, context)
-#~ 
+#~
+    def unlink(self, cr, uid, ids, context=None):
+        if isinstance (ids, (long, int)):
+            ids = [ids]
+
+        for id_ in ids:
+            obj = self.browse (cr, uid, id_, context=context)
+            if obj.base_action_rule:
+                obj.base_action_rule.unlink ()
+
+        return super(CenitFlow, self).unlink(cr, uid, ids, context)
+#~
     #~ def find(self, cr, uid, model, purpose, context=None):
         #~ domain = [('root', '=', model), ('purpose', '=', purpose)]
         #~ obj_ids = self.search(cr, uid, domain, context=context)
         #~ return obj_ids and self.browse(cr, uid, obj_ids[0]) or False
-#~ 
+#~
     #~ def set_receive_execution(self, cr, uid, ids, context=None):
         #~ for obj in self.browse(cr, uid, ids):
             #~ if obj.method == 'http_post':
@@ -524,7 +566,7 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
                     #~ flow_reference.set_flow_in_cenit(cr, uid, obj, context)
                 #~ except:
                     #~ pass
-#~ 
+#~
     #~ def receive(self, cr, uid, model, data, context=None):
         #~ res = False
         #~ context = context or {}
@@ -542,7 +584,7 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
                     #~ klass.edi_import(cr, uid, edi_document, context)
                 #~ res = True
         #~ return res
-#~ 
+#~
     def set_send_execution(self, cr, uid, ids, context=None):
         obj = self.browse(cr, uid, ids[0], context)
         #~ ic_obj = self.pool.get('ir.cron')
@@ -595,24 +637,26 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
                 #~ if obj.ir_cron_id:
                     #~ ic_obj.unlink(cr, uid, obj.ir_cron_id.id)
         return True
-#~ 
+#~
     def send(self, cr, uid, model, flow_id, context=None):
         #~ domain = [('data_type.model', '=', model_obj._name),
                   #~ ('webhook.purpose', '=', 'send')]
         #~ flow_obj_ids = self.search(cr, uid, domain, context=context)
-        _logger.info ('\n\nSending flow %s\n', flow_id)
+
         flow = self.browse (cr, uid, flow_id, context=context)
         if flow:
             #~ flow_obj = self.browse(cr, uid, flow_obj_ids[0])
-            if flow.format_ == 'json':
+            data = None
+            if flow.format_ == 'application/json':
                 ws = self.pool.get('cenit.serializer')
                 data = [ws.serialize(cr, uid, model)]
-            elif flow.format_ == 'edi':
+            elif flow.format_ == 'application/EDI-X12':
                 data = self.pool.get(model._name).edi_export(
-                    cr, uid, [model])
+                    cr, uid, [model]
+                )
             return self._send(cr, uid, flow.data_type, data, context)
         return False
-#~ 
+#~
     #~ def send_all(self, cr, uid, ids, context=None):
         #~ obj = self.browse(cr, uid, ids[0])
         #~ ws = self.pool.get('cenit.serializer')
@@ -628,7 +672,7 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
             #~ if model_ids:
                 #~ return self._send(cr, uid, obj, models, context)
         #~ return False
-#~ 
+#~
     def _send(self, cr, uid, obj, data, context=None):
         method = "http_post"
         #~ if local:
@@ -649,7 +693,7 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
         #~ return r.status_code
         values = {obj.cenit_root: data}
         path = "/api/v1/push"
-        
+
         rc = False
         _logger.info ("\n\nHTTP Posting to Cenit values: %s\n", values)
         try:
@@ -660,7 +704,7 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
 
         return rc
 
-#~ 
+#~
     #~ def local_post(self, cr, uid, obj, data, context=None):
         #~ db = context.get('partner_db')
         #~ if db:
@@ -671,14 +715,14 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
                 #~ ruid = uids and uids[0] or SI
                 #~ model = obj.root.lower()
                 #~ return registry['cenit.flow'].receive(rcr, ruid, model, data)
-#~ 
+#~
     #~ def file_post(self, cr, uid, obj, data, context=None):
         #~ p = inflect.engine()
         #~ payload = simplejson.dumps({p.plural(obj.root.lower()): data})
         #~ f = open('/home/cesar/file_post', 'w')
         #~ f.write(payload)
         #~ f.close()
-#~ 
+#~
     #~ def clean_reference(self, cr, uid, ids, context=None):
         #~ ref = self.pool.get('cenit.flow.reference')
         #~ ref_id = ref.search(cr, uid, [('flow_id', 'in', ids)], context=context)
@@ -689,4 +733,3 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
                 #~ cr.execute('delete from cenit_flow_reference where id = %s',
                            #~ (ref_id[0],))
         #~ return True
-

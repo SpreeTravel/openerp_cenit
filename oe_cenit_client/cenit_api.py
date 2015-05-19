@@ -61,22 +61,29 @@ class CenitApi (object):
 
     def cenit_push (self, cr, uid, _id, context=None):
         obj = self.browse (cr, uid, _id, context=context)
-        
+
         path = "/api/v1/push"
         values = {
             self.cenit_model: obj._get_values ()
         }
-        
+
         rc = False
         _logger.info ("\n\nPushing to Cenit values: %s\n", values)
         try:
             rc = self.post (cr, uid, path, values, context=context)
             _logger.info ("\n\nResponse received: %s\n", rc)
-            update = self._calculate_update (rc)
-            if not isinstance (context, dict):
-                context = {}
-            context.update ({'noPush':True})
-            rc = self.write (cr, uid, obj.id, update, context=context)
+
+            if rc.get ('success', False):
+                update = self._calculate_update (rc['success'])
+                if not isinstance (context, dict):
+                    context = {}
+                else:
+                    context = context.copy ()
+                context.update ({'noPush':True})
+                rc = self.write (cr, uid, obj.id, update, context=context)
+            else:
+                _logger.error (rc.get ('errors'))
+                return False
         except Warning as e:
             _logger.exception (e)
 
@@ -97,10 +104,11 @@ class CenitApi (object):
 
         return rc
 
+    @api.cr_uid_context
     def post (self, cr, uid, path, vals, context=None):
         config = self.instance(cr, uid, context)
         payload = simplejson.dumps(vals)
-        
+
         _logger.info ("\n\nJSON: %s\n\n", payload)
 
         r = requests.post(
@@ -110,13 +118,14 @@ class CenitApi (object):
         )
         if 200 <= r.status_code < 300:
             return simplejson.loads (r.content)
-        
+
         _logger.exception (simplejson.loads (r.content))
         raise Warning('Error trying to configure Cenit.')
 
+    @api.cr_uid_context
     def get(self, cr, uid, path, context=None):
         config = self.instance(cr, uid, context)
-        
+
         r = requests.get (
             config.get ('cenit_url') + path,
             headers=self.headers (config)
@@ -125,6 +134,7 @@ class CenitApi (object):
             return simplejson.loads(r.content)
         raise Warning('Error getting data from Cenit.')
 
+    @api.cr_uid_context
     def delete(self, cr, uid, path, context=None):
         config = self.instance(cr, uid, context)
 
@@ -134,7 +144,7 @@ class CenitApi (object):
         )
         if 200 <= r.status_code < 300:
             return True
-        
+
         raise Warning('Error removing data in Cenit.')
 
     def instance(self, cr, uid, ids, context=None):
@@ -161,6 +171,7 @@ class CenitApi (object):
             'X-User-Access-Token': config.get ('cenit_user_token')
         }
 
+    @api.cr_uid_context
     def create (self, cr, uid, vals, context=None):
         _logger.info ('\n\nCreating with context: %s\n', context)
         obj_id = super (CenitApi, self).create (
@@ -205,19 +216,20 @@ class CenitApi (object):
 
         return obj_id
 
+    @api.cr_uid_ids_context
     def write (self, cr, uid, ids, vals, context=None):
         _logger.info ('\n\nWriting with context: %s\n', context)
         push = True
         if isinstance (context, dict):
             push = not (context.get ('noPush', False))
-        
+
         if isinstance (ids, (int, long)):
             ids = [ids]
-        
+
         res = super (CenitApi, self).write (
             cr, uid, ids, vals, context=context
         )
-        
+
         cp = vals.copy ()
         if cp.pop ('cenitID', False):
             if len (cp.keys ()) == 0:
@@ -251,7 +263,7 @@ class CenitApi (object):
                     #~ _('Something wicked happened.')
             #~ }
             #~ return {'warning': warning}
-            #~ 
+            #~
         return res
 
     def unlink(self, cr, uid, ids, context=None):
