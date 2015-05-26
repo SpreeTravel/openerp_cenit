@@ -23,12 +23,9 @@ import requests
 import simplejson
 import logging
 
-from openerp import models, fields, api
+from openerp import api
 
-from openerp.addons.web.http import request
-
-from openerp.tools import config
-from openerp.tools.translate import _
+from openerp.addons.web.http import request  # @UnresolvedImport
 
 
 _logger = logging.getLogger(__name__)
@@ -173,7 +170,6 @@ class CenitApi (object):
 
     @api.cr_uid_context
     def create (self, cr, uid, vals, context=None):
-        _logger.info ('\n\nCreating with context: %s\n', context)
         obj_id = super (CenitApi, self).create (
             cr, uid, vals, context=context
         )
@@ -191,27 +187,27 @@ class CenitApi (object):
             rc = self.cenit_push (cr, uid, obj_id, context=context)
         except requests.ConnectionError as e:
             _logger.exception (e)
-            warning = {
-                'title': _('Error!'),
-                'message' :
-                    _('Cenit refused the connection. It is probably down.')
-            }
+#             warning = {
+#                 'title': _('Error!'),
+#                 'message' :
+#                     _('Cenit refused the connection. It is probably down.')
+#             }
             return False # {'warning': warning}
         except Exception as e:
             _logger.exception (e)
-            warning = {
-                'title': _('Error!'),
-                'message' :
-                    _('Something wicked happened.')
-            }
+#             warning = {
+#                 'title': _('Error!'),
+#                 'message' :
+#                     _('Something wicked happened.')
+#             }
             return False # {'warning': warning}
 
         if not rc:
-            warning = {
-                'title': _('Error!'),
-                'message' :
-                    _('Something wicked happened.')
-            }
+#             warning = {
+#                 'title': _('Error!'),
+#                 'message' :
+#                     _('Something wicked happened.')
+#             }
             return False # {'warning': warning}
 
         return obj_id
@@ -220,8 +216,10 @@ class CenitApi (object):
     def write (self, cr, uid, ids, vals, context=None):
         _logger.info ('\n\nWriting with context: %s\n', context)
         push = True
+        local = False
         if isinstance (context, dict):
             push = not (context.get ('noPush', False))
+            local = context.get ('local', False)
 
         if isinstance (ids, (int, long)):
             ids = [ids]
@@ -229,6 +227,9 @@ class CenitApi (object):
         res = super (CenitApi, self).write (
             cr, uid, ids, vals, context=context
         )
+
+        if local:
+            return res
 
         cp = vals.copy ()
         if cp.pop ('cenitID', False):
@@ -241,19 +242,19 @@ class CenitApi (object):
                     self.cenit_push (cr, uid, obj.id, context=context)
         except requests.ConnectionError as e:
             _logger.exception (e)
-            warning = {
-                'title': _('Error!'),
-                'message' :
-                    _('Cenit refused the connection. It is probably down.')
-            }
+#             warning = {
+#                 'title': _('Error!'),
+#                 'message' :
+#                     _('Cenit refused the connection. It is probably down.')
+#             }
             return False # {'warning': warning}
         except Exception as e:
             _logger.exception (e)
-            warning = {
-                'title': _('Error!'),
-                'message' :
-                    _('Something wicked happened.')
-            }
+#             warning = {
+#                 'title': _('Error!'),
+#                 'message' :
+#                     _('Something wicked happened.')
+#             }
             return False # {'warning': warning}
 
         #~ if not rc:
@@ -272,19 +273,19 @@ class CenitApi (object):
                 rc = self.cenit_drop (cr, uid, rec.id, context=context)
             except requests.ConnectionError as e:
                 _logger.exception (e)
-                warning = {
-                    'title': _('Error!'),
-                    'message' :
-                        _('Cenit refused the connection. It is probably down.')
-                }
+#                 warning = {
+#                     'title': _('Error!'),
+#                     'message' :
+#                         _('Cenit refused the connection. It is probably down.')
+#                 }
                 return False # {'warning': warning}
             except Exception as e:
                 _logger.exception (e)
-                warning = {
-                    'title': _('Error!'),
-                    'message' :
-                        _('Something wicked happened.')
-                }
+#                 warning = {
+#                     'title': _('Error!'),
+#                     'message' :
+#                         _('Something wicked happened.')
+#                 }
                 return False # {'warning': warning}
             if rc:
                 rc = super (CenitApi, self).unlink (
@@ -292,9 +293,9 @@ class CenitApi (object):
                 )
 
         if not rc:
-            warning = {
-                'title': _('Error!'),
-                'message' :
-                    _('Something wicked happened.')
-            }
+#             warning = {
+#                 'title': _('Error!'),
+#                 'message' :
+#                     _('Something wicked happened.')
+#             }
             return False # {'warning': warning}

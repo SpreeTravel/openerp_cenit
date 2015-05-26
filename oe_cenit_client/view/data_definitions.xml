@@ -80,7 +80,7 @@
                                         <field name="reference"
                                                 attrs="{'required':[('line_type', '=', 'model')]}" />
                                         <field name="line_cardinality"
-                                                attrs="{'required':[('line_type', '=', 'model')]}" />
+                                                attrs="{'required':[('line_type', 'in', ['model', 'reference'])]}" />
                                         <field name="primary" />
                                     </tree>
                                 </field>

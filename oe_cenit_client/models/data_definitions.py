@@ -26,7 +26,8 @@ import logging
 import simplejson
 
 from openerp import models, fields, api
-from openerp.addons.oe_cenit_client import cenit_api
+from openerp.addons.oe_cenit_client import cenit_api  # @UnresolvedImport
+from cookielib import vals_sorted_by_key
 
 
 _logger = logging.getLogger(__name__)
@@ -70,6 +71,7 @@ class CenitDataType (cenit_api.CenitApi, models.Model):
 
     cenitID = fields.Char ('Cenit ID')
     datatype_cenitID = fields.Char ('Cenit ID')
+    cenit_name = fields.Char ('Cenit Name')
     cenit_root = fields.Char ('Cenit Root')
 
     name = fields.Char ('Name', size=128, required=True)
@@ -92,7 +94,7 @@ class CenitDataType (cenit_api.CenitApi, models.Model):
 
     def _get_values (self):
         vals = {
-            'uri': "%s.json" %(self.name,),
+            'uri': "%s.json" %(self.cenit_root,),
             'schema': self.schema,
             'library': {
                 "id": self.library.cenitID
@@ -115,14 +117,6 @@ class CenitDataType (cenit_api.CenitApi, models.Model):
 
         return update
 
-    def __add_lines (self, cr, uid, lines, context=None):
-        line_pool = self.pool.get ('cenit.data_type.line')
-
-        for entry in lines:
-            line = line_pool.create (
-                cr, uid, entry, context=context
-            )
-
     @api.model
     def __match_linetype (self, field):
         rc = {}
@@ -139,7 +133,10 @@ class CenitDataType (cenit_api.CenitApi, models.Model):
                     "line_cardinality": "2%s" % (field.ttype.split ("2") [1])
                 })
             else:
-                rc.update ({"line_type": "reference"})
+                rc.update ({
+                    "line_type": "reference",
+                    "line_cardinality": "2%s" % (field.ttype.split ("2") [1])
+                })
 
         return rc
 
@@ -159,14 +156,14 @@ class CenitDataType (cenit_api.CenitApi, models.Model):
 
         for item in rc:
             if (item['setup::datatype']['schema']['uri'] == "%s.json" % (
-                    self.name,
+                    self._sluggify (self.name),
                 )) and \
                (item['setup::datatype']['schema']['library']['name'] == \
                     self.library.name
                 ):
                 vals = {
                     'datatype_cenitID': item['setup::datatype']['id'],
-                    'cenit_root': item['setup::datatype']['name']
+                    'cenit_name': item['setup::datatype']['name']
                 }
                 self.with_context (noPush=True).write (vals)
                 return
@@ -185,20 +182,25 @@ class CenitDataType (cenit_api.CenitApi, models.Model):
             return name [:-3]
         return name
 
+    def _sluggify (self, string):
+        return "_".join (string.lower ().split ())
+
+    def _camelize (self, slug):
+        return "".join ([s.capitalize () for s in slug.split("_")])
+
     @api.model
     def create (self, vals):
         schema = vals.get ('schema', False)
-        sflag = not schema
         lines = []
         if not schema:
             schema = {
-                "name": vals ["name"],
+                "title": vals ["name"],
                 "type": "object",
                 "properties": {},
-                #~ "required": ["id",]
             }
 
             odoo_fields = (
+                u"id",
                 u"create_date",
                 u"create_uid",
                 u"write_date",
@@ -244,17 +246,29 @@ class CenitDataType (cenit_api.CenitApi, models.Model):
 
                     if values ['line_type'] == "field":
                         schema['properties'].update ({
-                            f.value: self.__match_schematype (f.ttype)
+                            values ['value']: self.__match_schematype(f.ttype)
                         })
                     elif values ['line_type'] == "reference":
-                        try:
-                            name = getattr(getattr(model, field.name), 'name')
-                            schema['properties'].update ({
-                                f.value: self.__match_schematype ("string")
-                            })
-                        except:
-                            continue
+                        mod = model_pool.search ([('model', '=', f.relation)])[0]
 
+                        field_names = [ x.name for x in mod.field_id ]
+                        _logger.info ("\n\nField names in %s: %s\n", field_names, mod)
+
+                        name = "name" in field_names
+                        if name:
+                            data = {}
+                            if values['line_cardinality'] == "2many":
+                                data.update ({
+                                    "type": "array",
+                                    "items": self.__match_schematype("string")
+                                })
+                            else:
+                                data.update(self.__match_schematype("string"))
+                            schema['properties'].update ({
+                                values ['value']: data
+                            })
+                        else:
+                            continue
                     elif values ['line_type'] == "model":
                         data = {}
                         ref = values.pop ("reference")
@@ -262,20 +276,22 @@ class CenitDataType (cenit_api.CenitApi, models.Model):
                         if values['line_cardinality'] == "2many":
                             data.update ({
                                 "type": "array",
+                                "referenced": True,
                                 "items": {
-                                    "$ref": "%s.json" %(ref.name)
+                                    "$ref": "%s.json" % (ref.cenit_root,)
                                 }
                             })
                         else:
                             data.update ({
-                                "$ref": "%s.json" %(ref.name)
+                                "referenced": True,
+                                "$ref": "%s.json" % (ref.cenit_root,)
                             })
                         schema['properties'].update ({
-                            f.value: data
+                            values ['value']: data
                         })
                     else:
                         schema['properties'].update ({
-                            f.name: self.__match_schematype ("string")
+                            values ['name']: self.__match_schematype(f.ttype)
                         })
 
                     if not vals.get ('lines', False):
@@ -313,7 +329,9 @@ class CenitDataType (cenit_api.CenitApi, models.Model):
             else:
                 vals['lines'].extend (val_lines)
 
-        vals ['cenit_root'] = vals ['name']
+        vals ['cenit_root'] = self._sluggify (vals ['name'])
+        vals ['cenit_name'] = self._camelize (vals ['cenit_root'])
+
         _id = super (CenitDataType, self).create (vals)
 
         return _id
@@ -385,29 +403,43 @@ class CenitDataType (cenit_api.CenitApi, models.Model):
                                 )
                             })
                     elif line ['line_type'] == 'reference':
-                        values.update ({
-                            line ['value']: self.__match_schematype ("string")
-                        })
+                        name = getattr(getattr(model, line['name'], False), 'name', False)
+                        if name:
+                            data = {}
+                            if values['line_cardinality'] == "2many":
+                                data.update ({
+                                    "type": "array",
+                                    "items": self.__match_schematype("string")
+                                })
+                            else:
+                                data.update(self.__match_schematype("string"))
+                            values.update ({
+                                line ['value']: data
+                            })
+                        else:
+                            continue
                     elif line ['line_type'] == 'model':
                         data = {}
                         ref = self.browse (line.get ("reference"))
                         if line.get ('line_cardinality', False) == "2many":
                             data.update ({
                                 "type": "array",
+                                "referenced": True,
                                 "items": {
-                                    "$ref": "%s.json" %(ref.name)
+                                    "$ref": "%s.json" % (ref.cenit_root,)
                                 }
                             })
                         else:
                             data.update ({
-                                "$ref": "%s.json" %(ref.name)
+                                "referenced": True,
+                                "$ref": "%s.json" % (ref.cenit_root,)
                             })
                         values.update ({
                             line ['value']: data
                         })
                     else:
                         values.update ({
-                            line ['name']: self.__match_schematype ("string")
+                            line ['name']: self.__match_schematype (f.ttype)
                         })
                 else:
                     vals['lines'].remove ([_,__,line])
@@ -454,13 +486,24 @@ class CenitDataType (cenit_api.CenitApi, models.Model):
                             'line_cardinality': False,
                         })
                     elif line_type == "reference":
-                        values.update ({
-                            line_value : self.__match_schematype ("string")
-                        })
-                        v.update ({
-                            'reference': False,
-                            'line_cardinality': False,
-                        })
+                        name = getattr(getattr(model, f.name, False), 'name', False)
+                        if name:
+                            data = {}
+                            if values['line_cardinality'] == "2many":
+                                data.update ({
+                                    "type": "array",
+                                    "items": self.__match_schematype("string")
+                                })
+                            else:
+                                data.update(self.__match_schematype("string"))
+                            values.update ({
+                                line_value: data
+                            })
+                            v.update ({
+                                'reference': False,
+                            })
+                        else:
+                            continue
                     elif line_type == 'model':
                         ref = line_reference
                         v.update ({'reference': line_reference.id})
@@ -469,20 +512,24 @@ class CenitDataType (cenit_api.CenitApi, models.Model):
                             values.update ({
                                 line_value: {
                                     "type": "array",
+                                    "referenced": True,
                                     "items": {
-                                        "$ref": "%s.json" %(ref.name)
+                                        "$ref": "%s.json" % (ref.cenit_root,)
                                     }
                                 }
                             })
                         else:
                             values.update ({
                                 line_value: {
-                                    "$ref": "%s.json" %(ref.name)
+                                    "referenced": True,
+                                    "$ref": "%s.json" % (ref.cenit_root,)
                                 }
                             })
                     else:
                         values.update ({
-                            line_name : self.__match_schematype ("string")
+                            line_name : self.__match_schematype (
+                                "string"
+                            )
                         })
                         v.update ({
                             'reference': False,
@@ -493,7 +540,9 @@ class CenitDataType (cenit_api.CenitApi, models.Model):
             schema = self._update_schema_properties (values)
             vals.update ({"schema": schema[0]})
 
-
+        if vals.get ('name', False):
+            vals['cenit_root'] = self._sluggify(vals['name'])
+            vals['cenit_name'] = self._camelize(vals['cenit_root'])
         res = super (CenitDataType, self).write (vals)
 
         return res
