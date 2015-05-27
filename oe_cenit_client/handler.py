@@ -14,6 +14,18 @@ class CenitHandler(models.TransientModel):
             obj_ids = model_obj.search(cr, uid, to_search, context=context)
             if obj_ids:
                 return obj_ids[0]
+            else:
+                return self.find_old(cr, uid, match, model_obj, params, context)
+        return False
+        
+    def find_old(self, cr, uid, match, model_obj, params, context=None):
+        try:
+            to_search = [('name', '=', params['reference'])]
+            obj_ids = model_obj.search(cr, uid, to_search, context=context)
+            if obj_ids:
+                return obj_ids[0]
+        except:
+            pass
         return False
 
     def find_reference(self, cr, uid, field, params, context=None):
