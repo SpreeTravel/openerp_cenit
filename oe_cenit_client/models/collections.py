@@ -36,6 +36,7 @@ class CenitCollection(models.Model):
 
     @api.model
     def _update_collection_list(self):
+        param_pool = self.env['cenit.collection.parameter']
         path = "/api/v1/shared_collection"
         api = cenit_api.CenitApi()
         rc = api.get(self.env.cr, self.env.uid, path)
@@ -44,13 +45,50 @@ class CenitCollection(models.Model):
         for entry in rc:
             collection = entry.get('shared_collection')
             data = {
-                'cenitID': collection.get('id'),
+                'sharedID': collection.get('id'),
                 'name': collection.get('name'),
                 'description': collection.get('description'),
             }
-            _logger.info ("\n\nData:%s\n",data)
-            if not self.search([('cenitID','=',data['cenitID'])]):
-                collection = self.create(data)
+
+            domain = [('sharedID','=',data.get('sharedID'))]
+            candidates = self.search(domain)
+
+            if not candidates:
+                coll = self.create(data)
+            else:
+                coll = candidates[0]
+                coll.write(data)
+
+
+            params = collection.get('pull_parameters', [])
+            param_list = []
+            strict_keys = []
+
+            for param in params:
+                param_data = {
+                    'cenitID': param.get('id'),
+                    'name': param.get('label')
+                }
+                domain = [('cenitID', '=', param_data.get('cenitID'))]
+                candidates = param_pool.search(domain)
+
+                if not candidates:
+                    param_list.append([0, False, param_data])
+                else:
+                    p = candidates[0]
+                    param_list.append([1, p.id, param_data])
+
+                strict_keys.append(param_data.get('name'))
+
+            domain = [
+                ('name', 'not in', strict_keys),
+                ('collection', '=', coll.id)
+            ]
+            candidates = param_pool.search(domain)
+            for candidate in candidates:
+                param_list.append([2, candidate.id, False])
+
+            rc = coll.write({'parameters': param_list})
 
         return {
             "type": "ir.actions.act_window",
@@ -272,10 +310,8 @@ class CenitCollection(models.Model):
             }
             crole.with_context(local=True).write(role_members)
 
-
     @api.one
     def _install_flows(self, values, events, translators):
-        _logger.info("\n\nInstalling FLOWS with %s, %s and %s\n", values, events, translators)
         flow_pool = self.env['cenit.flow']
         lib_pool = self.env['cenit.library']
         sch_pool = self.env['cenit.schema']
@@ -344,8 +380,6 @@ class CenitCollection(models.Model):
                     'connection_role': rc[0].id
                 })
 
-            _logger.info ("\n\nSo far: %s\n", flow_data)
-
             domain = [('name', '=', flow_data.get('name'))]
             candidates = flow_pool.search(domain)
 
@@ -360,7 +394,6 @@ class CenitCollection(models.Model):
 
     @api.one
     def _parse_refs(self, values):
-        _logger.info("\n\nParsing REF with %s\n", values)
         rc = []
         for ref in values:
             rc.append((
@@ -378,24 +411,27 @@ class CenitCollection(models.Model):
     @api.one
     def install_collection(self):
         api = cenit_api.CenitApi()
-        _logger.info ("\n\nPulling and Installing %s\n", self.name)
 
-        path = "/api/v1/shared_collection/%s" % (self.cenitID,)
-        rc = api.get(self.env.cr, self.env.uid, path)
+        path = "/api/v1/shared_collection/%s/pull" % (self.sharedID,)
+        data = {
+            'pull_parameters': dict(
+                (param.cenitID,param.value) for param in self.parameters
+            )
+        }
+        rc = api.post(self.env.cr, self.env.uid, path, data)
 
-        # TODO: Actually pull the collection first
         path = "/api/v1/collection"
         rc = api.get(self.env.cr, self.env.uid, path)
 
         data = {}
-        for collection in rc:
-            rc = collection.get('collection', {})
-            if rc.get('name', False) == self.name:
-                data = rc
+        for entry in rc:
+            collection = entry.get('collection', {})
+            if collection.get('name', False) == self.name:
+                data = collection
                 break
 
-        events = self._parse_refs(data.get('events', [[]]))[0]
-        translators = self._parse_refs(data.get('translators', [[]]))[0]
+        events = self._parse_refs(data.get('events', []))[0]
+        translators = self._parse_refs(data.get('translators', []))[0]
 
         keys = (
             'libraries', 'connections', 'webhooks', 'connection_roles'
@@ -418,8 +454,28 @@ class CenitCollection(models.Model):
     _name = "cenit.collection"
 
     cenitID = fields.Char('CenitID')
+    sharedID = fields.Char('SharedID')
     name = fields.Char('Name')
     description = fields.Text('Description')
     #~ image = fields.Binary('Image')
-    installed = fields.Boolean("Installed", default=False)
 
+    parameters = fields.One2many(
+        'cenit.collection.parameter',
+        'collection',
+        string = 'Pull Parameters'
+    )
+
+
+class CenitCollectionPullParameter(models.Model):
+    _name = "cenit.collection.parameter"
+
+    cenitID = fields.Char('CenitID')
+    name = fields.Char('Name')
+    value = fields.Char('Value')
+
+    collection = fields.Many2one(
+        'cenit.collection',
+        string="Collection",
+        ondelete="cascade",
+        required=True
+    )

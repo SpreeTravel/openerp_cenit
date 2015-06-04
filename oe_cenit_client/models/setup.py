@@ -115,14 +115,13 @@ class CenitConnection (cenit_api.CenitApi, models.Model):
     @api.one
     def _get_conn_data(self):
         path = "/api/v1/connection/%s" % self.cenitID
-
         rc = self.get(path)
 
-        _logger.info(rc)
         vals = {
             'key': rc['connection']['number'],
             'token': rc['connection']['token'],
         }
+
         self.with_context(local=True).write(vals)
         return
 
@@ -580,9 +579,6 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
         res = super(CenitFlow, self).write(vals)
         new_purpose = self._get_direction()[0]
 
-        _logger.info ("\n\nPrev [%s] New [%s]\n", prev_purpose, new_purpose)
-        _logger.info ("\n\nDataType %s\n", self.data_type)
-
         if self.data_type and \
             ((new_purpose != prev_purpose) or \
              (vals.get('execution', False)) or \
@@ -655,8 +651,6 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
             'on_write': 'on_write'
         }.get(self.execution, 'on_create_or_write')
 
-        _logger.info("\n\nFlow execution is: %s\n", execution)
-
         if execution == 'only_manual':
             if self.base_action_rule:
                 self.base_action_rule.unlink()
@@ -712,7 +706,6 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
     def send(self, obj, flow_id):
         flow = self.browse(flow_id)
         if flow:
-            _logger.info("\n\nSending flow %s\n", flow.name)
             data = None
             if flow.format_ == 'application/json':
                 ws = self.env['cenit.serializer']
@@ -754,14 +747,11 @@ class CenitFlow (cenit_api.CenitApi, models.Model):
         root = self.data_type.cenit_root
         if isinstance(root, list):
             root = root[0]
-        _logger.info ("\n\nROOT: %s\n", root)
         values = {root: data}
 
         rc = False
-        _logger.info("\n\nHTTP Posting to Cenit values: %s\n", values)
         try:
             rc = self.post(path, values)
-            _logger.info("\n\nResponse received: %s\n", rc)
         except Warning as e:
             _logger.exception(e)
 

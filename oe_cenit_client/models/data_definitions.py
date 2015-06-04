@@ -152,17 +152,10 @@ class CenitDataType(models.Model):
         if not root:
             root = ".".join(self.schema.uri.split(".")[:-1])
 
-        _logger.info("\n\nROOT before process: %s\n", root)
-
         self.cenit_root = "_".join(root.lower().split())
 
     _name = 'cenit.data_type'
-    #~ cenit_model = 'schema'
-    #~ cenit_models = 'schemas'
 
-    #~ cenitID = fields.Char('Cenit ID')
-    #~ datatype_cenitID = fields.Char('Cenit ID')
-    #~ cenit_name = fields.Char('Cenit Name')
     cenit_root = fields.Char(compute='_compute_root', store=True)
 
     name = fields.Char('Name', size=128, required=True)
@@ -181,31 +174,6 @@ class CenitDataType(models.Model):
     _sql_constraints = [
         ('name_uniq', 'UNIQUE(name)', 'The name must be unique!'),
     ]
-
-
-    #~ def _get_values(self):
-        #~ vals = {
-            #~ 'uri': "%s.json" %(self.cenit_root,),
-            #~ 'schema': self.schema,
-            #~ 'library': {
-                #~ "id": self.library.cenitID
-            #~ }
-        #~ }
-        #~ if self.cenitID:
-            #~ vals.update({'id': self.cenitID})
-#~
-        #~ return vals
-#~
-    #~ def _calculate_update(self, values):
-        #~ update = {}
-        #~ for k,v in values.items():
-            #~ if k == "%s" % (self.cenit_models):
-                #~ update = {
-                    #~ 'cenitID': v[0]['id'],
-                    #~ 'datatype_cenitID': v[0]['data_types'][0]['id'],
-                #~ }
-#~
-        #~ return update
 
     @api.model
     def __match_linetype(self, field):
@@ -237,26 +205,6 @@ class CenitDataType(models.Model):
             u"integer": {"type": "integer"},
             u"boolean": {"type": "boolean"},
         }.get(line_type, {"type": "string"})
-
-    #~ @api.one
-    #~ def _get_dt_cenitID(self):
-        #~ path = "/api/v1/data_type"
-        #~
-        #~ rc = self.get(path)
-        #~
-        #~ for item in rc:
-            #~ if (item['setup::datatype']['schema']['uri'] == "%s.json" % (
-                    #~ self._sluggify(self.name),
-                #~ )) and \
-               #~ (item['setup::datatype']['schema']['library']['name'] == \
-                    #~ self.library.name
-                #~ ):
-                #~ vals = {
-                    #~ 'datatype_cenitID': item['setup::datatype']['id'],
-                    #~ 'cenit_name': item['setup::datatype']['name']
-                #~ }
-                #~ self.with_context(noPush=True).write(vals)
-                #~ return
 
     @api.one
     def _update_schema_properties(self, values):

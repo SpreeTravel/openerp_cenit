@@ -10,7 +10,7 @@
             <field name="name">view.cenit.collection.tree</field>
             <field name="model">cenit.collection</field>
             <field name="arch" type="xml">
-                <tree string="Collections" >
+                <tree string="Collections" create="false">
                     <field name="name" />
                     <field name="description" />
                     <button string="Install/Reinstall" type="object"
@@ -23,13 +23,25 @@
             <field name="name">view.cenit.collection.form</field>
             <field name="model">cenit.collection</field>
             <field name="arch" type="xml">
-                <form string="Collections" >
+                <form string="Collections" create="false">
                     <header>
                         <button string="Install/Reinstall" type="object"
                                 name="install_collection" class="oe_highlight"/>
                     </header>
-                    <field name="name" />
-                    <field name="description" />
+                    <group>
+                        <field name="name" readonly="1"/>
+                        <field name="description" readonly="1"/>
+                    </group>
+                    <notebook>
+                        <page string="Pull Parameters">
+                            <field name="parameters">
+                                <tree string="Parameters" editable="bottom" create="false">
+                                    <field name="name" readonly="1" string="Label"/>
+                                    <field name="value" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
                 </form>
             </field>
         </record>
@@ -41,15 +53,6 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
         </record>
-
-<!--
-        <act_window id="cenit_collection_list_update"
-            name="Update Collection List"
-            src_model="cenit.collection"
-            view_type="tree"
-            view_mode="tree"
-            key2="client_action_multi" />
--->
 
         <menuitem id="menu_cenit_collection" name="Collections"
             parent="menu_cenit_collections" sequence="0"

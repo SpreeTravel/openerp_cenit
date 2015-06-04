@@ -163,7 +163,6 @@ class CenitApi (object):
 
     @api.cr_uid_context
     def create (self, cr, uid, vals, context=None):
-        _logger.info("\n\nCreating with CONTEXT %s\n", context)
         obj_id = super (CenitApi, self).create (
             cr, uid, vals, context=context
         )

@@ -130,7 +130,6 @@ class CenitHandler(models.TransientModel):
                 if not vals:
                     continue
 
-                _logger.info ("\n\nCreating %s with %s\n", m_name, vals)
                 obj = model_obj.create(vals)
 
             obj_ids.append(obj.id)
@@ -153,7 +152,6 @@ class CenitHandler(models.TransientModel):
             if obj:
                 vals = self.process(match, p)
                 vals = self.trim(match, obj, vals)
-                _logger.info ("\n\nUpdating %s with %s\n", m_name, vals)
                 obj.write(vals)
                 obj_ids.append(obj.id)
 
@@ -179,6 +177,5 @@ class CenitHandler(models.TransientModel):
                 ids = self.add (p, m_name)
 
             obj_ids.extend(ids)
-            _logger.info ("\n\nPushed objects: %s\n", obj_ids)
 
         return obj_ids

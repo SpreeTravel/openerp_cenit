@@ -43,7 +43,7 @@ class CenitSerializer(models.TransientModel):
         vals = {}
         wdt = self.env['cenit.data_type']
         match = data_type.model.model == obj._name
-        _logger.info ("\n\n%s == %s? %s\n",data_type.model.model, obj._name, match)
+
         if match:
             schema = simplejson.loads (data_type.schema.schema) ['properties']
             _reset = []

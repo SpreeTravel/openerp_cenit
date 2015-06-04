@@ -21,7 +21,6 @@ class WebhookController(http.Controller):
         type='json', auth='none', methods=['POST']
     )
     def cenit_post(self, action, root=None):
-        _logger.info ("\n\nOn POST\n")
         status_code = 400
         environ = request.httprequest.headers.environ.copy()
 
@@ -47,17 +46,14 @@ class WebhookController(http.Controller):
                     context = {'sender': 'client', 'action': action}
 
                     if root is None:
-                        _logger.info ("\n\nRoot is None\n")
                         for root, data in request.jsonrequest.items():
                             root = p.singular_noun(root) or root
                             rc = flow_model.receive (cr, SUPERUSER_ID, root,
                                                      data, context)
-                            _logger.info("\n\nRC: %s\n", rc)
                             if rc:
                                 status_code = 200
                     else:
                         root = p.singular_noun(root) or root
-                        _logger.info ("\n\nRoot is %s\n", root)
                         rc = flow_model.receive (cr, SUPERUSER_ID, root,
                                                  request.jsonrequest, context)
                         if rc:
