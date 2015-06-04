@@ -2,7 +2,7 @@
 
 import logging
 
-from openerp import models
+from openerp import models, api
 
 
 _logger = logging.getLogger(__name__)
@@ -11,54 +11,53 @@ _logger = logging.getLogger(__name__)
 class CenitHandler(models.TransientModel):
     _name = 'cenit.handler'
 
-    def find(self, cr, uid, match, model_obj, params, context=None):
-        fp = [x for x in match.lines if x.primary]
-        fp = fp and fp[0] or False
-        if fp and params.get(fp.value, False):
-            to_search = [(fp.name, '=', params[fp.value])]
-            obj_ids = model_obj.search(cr, uid, to_search, context=context)
-            if obj_ids:
-                return obj_ids[0]
+    @api.model
+    def find(self, match, params):
+        model_obj = self.env[match.model.model]
+
+        fp = [x for x in match.lines if x.primary] or False
+        if fp:
+            to_search = []
+            for entry in fp:
+                value = params.get(entry.value, False)
+                if not value:
+                    continue
+                to_search.append((entry.name, '=', value))
+
+            objs = model_obj.search(to_search)
+            if objs:
+                return objs[0]
+
         return False
 
-    #~ def find_reference(self, cr, uid, field, params, context=None):
-        #~ if field.reference:
-            #~ model_obj = self.pool.get(field.reference.model.model)
-            #~ to_search = [('name', '=', params.get(field.value, False))]
-            #~ obj_ids = model_obj.search(cr, uid, to_search, context=context)
-            #~ return obj_ids and obj_ids[0] or False
-        #~ return False
-
-    def find_reference(self, cr, uid, match, field, params, context=None):
-        _logger.info ("\n\nFinding reference on %s with %s\n", field, match)
-
+    @api.model
+    def find_reference(self, match, field, params):
         f = [x for x in match.model.field_id if x.name == field.name][0]
-        model_pool = self.pool.get ("ir.model")
-        model_id = model_pool.search (cr, uid, [('model', '=', f.relation)], context=context)[0]
-        model_obj = model_pool.browse (cr, uid, model_id, context=context)
-        model_obj = self.pool.get (model_obj.model)
-        _logger.info ("\n\nModel: %s\n", model_obj)
+
+        model_pool = self.env["ir.model"]
+        model = model_pool.search ([('model', '=', f.relation)])[0]
+        model_obj = self.env [model.model]
 
         op = "="
         value = params.get(field.value, False)
         if (field.line_cardinality == "2many") and value:
             op = "in"
         to_search = [('name', op, value)]
-        _logger.info ("\n\nDomain: %s\n", to_search)
+        objs = model_obj.search(to_search)
 
-        obj_ids = model_obj.search(cr, uid, to_search, context=context)
-        _logger.info ("\n\nCandidates: %s\n", obj_ids)
-
-        rc = obj_ids and obj_ids[0] or False
-        if field.line_cardinality == "2many":
-            rc = obj_ids or False
+        rc = objs or False
+        if rc and (field.line_cardinality == "2one"):
+            rc = rc[0].id
 
         return rc
 
-    def process(self, cr, uid, match, params, context=None):
+    @api.model
+    def process(self, match, params):
         vals = {}
 
         for field in match.lines:
+            if field.name == "id":
+                continue
             if field.line_type == 'field':
                 if params.get(field.value, False):
                     vals[field.name] = params[field.value]
@@ -66,82 +65,120 @@ class CenitHandler(models.TransientModel):
                 if field.line_cardinality == '2many':
                     vals[field.name] = []
                     for x in params.get(field.value, []):
-                        item = self.process(cr, uid, field.reference, x)
-                        vals[field.name].append((0, 0, item))
+                        item = self.process(field.reference, x)
+
+                        rc = self.find(field.reference, x)
+                        tup = (0, 0, item)
+                        if rc:
+                            tup = (1, rc, item)
+
+                        vals[field.name].append(tup)
                 elif field.line_cardinality == '2one':
                     x = params.get(field.value, {})
-                    rel_ids = self.add(cr, uid, x, field.reference.name)
+                    rel_ids = self.push(x, field.reference.name)
                     vals[field.name] = rel_ids and rel_ids[0] or False
             elif field.line_type == 'reference':
-                vals[field.name] = self.find_reference(cr, uid, match, field,
-                                                       params, context)
-                                                       #~ params, context)
+                vals[field.name] = self.find_reference(match, field, params)
             elif field.line_type == 'default':
                 vals[field.name] = field.value
-        _logger.info ("\n\nProcessed values: %s\n", vals)
+
         return vals
 
-    def get_match(self, cr, uid, root, context=None):
-        wdt = self.pool.get('cenit.data_type')
-        matching_ids = wdt.search(cr, uid, [('cenit_root', '=', root)])
+    @api.model
+    def trim (self, match, obj, vals):
+        vals = vals.copy()
+        obj_pool = self.env[match.model.model]
+        #~ obj = obj_pool.browse (obj_id)
 
-        if matching_ids:
-            return wdt.browse(cr, uid, matching_ids[0], context)
+        for field in match.lines:
+            if field.line_type in ("model", "reference"):
+                if field.line_cardinality == "2many":
+                    for record in getattr(obj, field.name):
+                        if vals.get (field.name, False):
+                            if record.id not in [ x[1] for x in vals[field.name] ]:
+                                vals[field.name].append ((2, record.id, False))
+                        else:
+                            vals[field.name] = [(2, record.id, False)]
+        return vals
+
+    @api.model
+    def get_match(self, root):
+        wdt = self.env['cenit.data_type']
+        matching = wdt.search([('cenit_root', '=', root)])
+
+        if matching:
+            return matching[0]
         return False
 
-    def add(self, cr, uid, params, m_name, context=None):
-        context = context or {}
-        match = self.get_match(cr, uid, m_name, context)
+    @api.model
+    def add(self, params, m_name):
+        match = self.get_match(m_name)
         if not match:
             return False
-        model_obj = self.pool.get(match.model.model)
+
+        model_obj = self.env[match.model.model]
         if not isinstance(params, list):
             params = [params]
+
         obj_ids = []
         for p in params:
-            obj_id = self.find(cr, uid, match, model_obj, p, context)
-            if not obj_id:
-                vals = self.process(cr, uid, match, p, context)
+            obj = self.find(match, p)
+
+            if not obj:
+                vals = self.process(match, p)
+
                 if not vals:
                     continue
-                obj_id = model_obj.create(cr, uid, vals, context)
-            obj_ids.append(obj_id)
+
+                _logger.info ("\n\nCreating %s with %s\n", m_name, vals)
+                obj = model_obj.create(vals)
+
+            obj_ids.append(obj.id)
         return obj_ids
 
-    def update(self, cr, uid, params, m_name, context=None):
-        context = context or {}
-        match = self.get_match(cr, uid, m_name, context)
-        if not match:
-            return False
-        model_obj = self.pool.get(match.model.model)
-        if not isinstance(params, list):
-            params = [params]
-        obj_ids = []
-        for p in params:
-            obj_id = self.find(cr, uid, match, model_obj, p, context)
-            if obj_id:
-                vals = self.process(cr, uid, match, p, context)
-                model_obj.write(cr, uid, obj_id, vals, context)
-            obj_ids.append(obj_id)
-        return obj_ids
-
-    def push(self, cr, uid, params, m_name, context=None):
-        context = context or {}
-        match = self.get_match(cr, uid, m_name, context)
+    @api.model
+    def update(self, params, m_name):
+        match = self.get_match(m_name)
         if not match:
             return False
 
+        model_obj = self.env[match.model.model]
         if not isinstance(params, list):
             params = [params]
 
         obj_ids = []
         for p in params:
-            vals = self.process(cr, uid, match, p, context)
+            obj = self.find(match, p)
+
+            if obj:
+                vals = self.process(match, p)
+                vals = self.trim(match, obj, vals)
+                _logger.info ("\n\nUpdating %s with %s\n", m_name, vals)
+                obj.write(vals)
+                obj_ids.append(obj.id)
+
+        return obj_ids
+
+    @api.model
+    def push(self, params, m_name):
+        match = self.get_match(m_name)
+        if not match:
+            return False
+
+        if not isinstance(params, list):
+            params = [params]
+
+        obj_ids = []
+        for p in params:
             model_obj = self.pool.get(match.model.model)
-            obj_id = self.find(cr, uid, match, model_obj, p, context)
-            if obj_id:
-                model_obj.write(cr, uid, obj_id, vals, context)
+            obj = self.find(match, p)
+
+            if obj:
+                ids = self.update (p, m_name)
             else:
-                obj_id = model_obj.create(cr, uid, vals, context)
-            obj_ids.append(obj_id)
+                ids = self.add (p, m_name)
+
+            obj_ids.extend(ids)
+            _logger.info ("\n\nPushed objects: %s\n", obj_ids)
+
         return obj_ids

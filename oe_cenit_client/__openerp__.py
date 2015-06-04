@@ -20,23 +20,21 @@
 ##############################################################################
 
 {
-    'name': 'OpenERP Cenit Client',
+    'name': 'Odoo Cenit Client',
     'version': '0.1',
     'author': 'OpenJAF',
     'website': 'http://www.openjaf.com',
     'category': 'Integration',
     'description': """
-        OpenERP Cenit Client
+        Odoo Cenit Client
     """,
     'depends': ['base', 'base_action_rule'],
     'data': [
         'security/ir.model.access.csv',
+        'view/collections.xml',
         'view/config.xml',
         'view/data_definitions.xml',
         'view/setup.xml',
-        #~ 'view/client.xml',
-        #~ 'view/flow.xml',
-        #~ 'view/data_type.xml',
     ],
     'installable': True
 }

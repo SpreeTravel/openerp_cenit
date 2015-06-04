@@ -25,7 +25,7 @@ import logging
 
 from openerp import api
 
-from openerp.addons.web.http import request  # @UnresolvedImport
+from openerp.addons.web.http import request
 
 
 _logger = logging.getLogger(__name__)
@@ -43,7 +43,6 @@ class CenitApi (object):
         vals.pop ('display_name')
         vals.pop ('id')
 
-        _logger.info ("\n\nReturning values: %s\n", vals)
         return vals
 
     def _calculate_update (self, values):
@@ -65,10 +64,8 @@ class CenitApi (object):
         }
 
         rc = False
-        _logger.info ("\n\nPushing to Cenit values: %s\n", values)
         try:
             rc = self.post (cr, uid, path, values, context=context)
-            _logger.info ("\n\nResponse received: %s\n", rc)
 
             if rc.get ('success', False):
                 update = self._calculate_update (rc['success'])
@@ -76,7 +73,7 @@ class CenitApi (object):
                     context = {}
                 else:
                     context = context.copy ()
-                context.update ({'noPush':True})
+                context.update ({'local':True})
                 rc = self.write (cr, uid, obj.id, update, context=context)
             else:
                 _logger.error (rc.get ('errors'))
@@ -91,11 +88,9 @@ class CenitApi (object):
         path = "/api/v1/%s/%s" % (self.cenit_model, obj.cenitID)
 
         rc = False
-        _logger.info ("\n\nDroping from Cenit: %s\n", path)
 
         try:
             rc = self.delete (cr, uid, path, context=context)
-            _logger.info ("\n\nResponse received: %s\n", rc)
         except Warning as e:
             _logger.exception (e)
 
@@ -105,8 +100,6 @@ class CenitApi (object):
     def post (self, cr, uid, path, vals, context=None):
         config = self.instance(cr, uid, context)
         payload = simplejson.dumps(vals)
-
-        _logger.info ("\n\nJSON: %s\n\n", payload)
 
         r = requests.post(
             config.get ('cenit_url') + path,
@@ -170,6 +163,7 @@ class CenitApi (object):
 
     @api.cr_uid_context
     def create (self, cr, uid, vals, context=None):
+        _logger.info("\n\nCreating with CONTEXT %s\n", context)
         obj_id = super (CenitApi, self).create (
             cr, uid, vals, context=context
         )
@@ -178,7 +172,6 @@ class CenitApi (object):
         if isinstance (context, dict):
             local = context.get ('local', False)
 
-        _logger.info ('\n\nLocal?: %s\n', local)
         if local:
             return obj_id
 
@@ -214,11 +207,8 @@ class CenitApi (object):
 
     @api.cr_uid_ids_context
     def write (self, cr, uid, ids, vals, context=None):
-        _logger.info ('\n\nWriting with context: %s\n', context)
-        push = True
         local = False
         if isinstance (context, dict):
-            push = not (context.get ('noPush', False))
             local = context.get ('local', False)
 
         if isinstance (ids, (int, long)):
@@ -237,9 +227,8 @@ class CenitApi (object):
                 return res
 
         try:
-            if push:
-                for obj in self.browse (cr, uid, ids, context=context):
-                    self.cenit_push (cr, uid, obj.id, context=context)
+            for obj in self.browse (cr, uid, ids, context=context):
+                self.cenit_push (cr, uid, obj.id, context=context)
         except requests.ConnectionError as e:
             _logger.exception (e)
 #             warning = {
@@ -267,10 +256,13 @@ class CenitApi (object):
             #~
         return res
 
+    @api.cr_uid_ids_context
     def unlink(self, cr, uid, ids, context=None):
+        rc = True
         for rec in self.browse(cr, uid, ids, context=context):
             try:
-                rc = self.cenit_drop (cr, uid, rec.id, context=context)
+                #~ rc = self.cenit_drop (cr, uid, rec.id, context=context)
+                pass
             except requests.ConnectionError as e:
                 _logger.exception (e)
 #                 warning = {

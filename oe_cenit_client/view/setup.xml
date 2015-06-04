@@ -3,7 +3,7 @@
     <data>
 
         <menuitem id="menu_cenit_setup" name="Setup"
-            parent="menu_cenit_integration" sequence="1" />
+            parent="menu_cenit_integration" sequence="2" />
 
 
         <record id="view_cenit_connection_tree" model="ir.ui.view">
@@ -145,6 +145,7 @@
                     <field name="name" />
                     <field name="path" />
                     <field name="purpose" />
+                    <field name="method" />
                 </tree>
             </field>
         </record>
@@ -155,14 +156,17 @@
             <field name="arch" type="xml">
                 <form string="Webhook">
                     <group>
+                        <field name="name"/>
+                        <field name="path"/>
+                        <field name="method"/>
+<!--
                         <group>
-                            <field name="name"/>
-                            <field name="path"/>
                         </group>
                         <group>
-                            <field name="purpose"/>
-                            <field name="method"/>
+                            <field name="method"
+                                   attrs="{'invisible':[('purpose','!=','send')],'required':[('purpose','=','send')]}"/>
                         </group>
+-->
                     </group>
                     <notebook>
                         <page string="Parameters">
@@ -220,7 +224,8 @@
                 <tree string="Flows" >
                     <field name="name" />
                     <field name="data_type" />
-                    <field name="execution" />
+                    <field name="connection_role" />
+                    <field name="webhook" />
                     <!--
                         <button name="process_all" type="object" string="Process" icon="gtk-go-forward" attrs="{'invisible': [('purpose', '=', 'receive')]}"/>
                         <button name="set_send_execution" type="object" string="Set Send Execution" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('purpose', '=', 'receive')]}"/>
@@ -240,31 +245,25 @@
                     <group>
                         <group>
                             <field name="name" />
-                            <field name="execution" />
-<!--
-                            <field name="cron"
-                                   attrs="{ 'required':[('execution','=','interval')], 'invisible':[('execution','!=','interval')]}" />
--->
-                            <field name="format_" />
-<!--
-                                   on_change="on_webhook_format_changed(webhook, format_)"/>
--->
-                            <field name="local"
-                                   attrs="{'invisible': True}"/>
-                            <field name="cenit_translator"
-                                   attrs="{'invisible':[('local','=',True),('webhook','=',False)],'required':[('local','=',False)]}"/>
+                            <field name="schema" />
+                            <field name="data_type"
+                                   attrs="{'invisible':[('schema','=',False)]}"
+                                   options="{'no_quick_create':True,'no_create_edit':True}" />
+                            <field name="webhook" />
+                            <field name="connection_role"
+                                   attrs="{'invisible':[('webhook','=',False)]}"
+                                   options="{'no_quick_create':True,'no_create_edit':True}" />
                         </group>
                         <group>
-                            <field name="data_type" />
-                            <field name="scope" />
-                            <field name="connection_role"
-                                   on_change="on_connection_role_changed(connection_role)"/>
-                            <field name="webhook"
-                                   attrs="{'invisible':[('connection_role','=',False)]}"
-                                   options="{'no_quick_create':True,'no_create_edit':True}" />
-<!--
-                                   on_change="on_webhook_format_changed(webhook, format_)"/>
--->
+                            <field name="method" invisible="1" />
+                            <field name="execution"
+                                   attrs="{'required':[('method','!=','get')],'invisible':[('method','=','get')]}"/>
+                            <field name="cron"
+                                   attrs="{'required':[('execution','=','interval')],'invisible':[('execution','!=','interval')]}" />
+                            <field name="format_" />
+                            <field name="cenit_translator"
+                                   attrs="{'invisible':[('local','=',True),('webhook','=',False)],'required':[('local','=',False)]}"/>
+                            <field name="local" invisible="1" />
                         </group>
                     </group>
                 </form>

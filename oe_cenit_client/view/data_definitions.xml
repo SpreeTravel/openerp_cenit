@@ -3,9 +3,9 @@
     <data>
 
         <menuitem id="menu_cenit_data_definitions" name="Data Definitions"
-            parent="menu_cenit_integration" sequence="0" />
+            parent="menu_cenit_integration" sequence="1" />
 
-<!--
+
         <record id="view_cenit_schema_tree" model="ir.ui.view">
             <field name="name">view.cenit.schema.tree</field>
             <field name="model">cenit.schema</field>
@@ -44,7 +44,6 @@
         <menuitem id="menu_cenit_schema" name="Schemas"
             parent="menu_cenit_data_definitions" sequence="0"
             action="action_cenit_schema" />
--->
 
 
         <record id="view_cenit_data_type_tree" model="ir.ui.view">
@@ -69,6 +68,7 @@
                             <field name="name"/>
                             <field name="model"/>
                             <field name="library"/>
+                            <field name="schema"/>
                         </group>
                         <notebook>
                             <page string="Mapping">
@@ -84,9 +84,6 @@
                                         <field name="primary" />
                                     </tree>
                                 </field>
-                            </page>
-                            <page string="Schema">
-                                <field name="schema" />
                             </page>
                         </notebook>
                     </sheet>
@@ -113,6 +110,7 @@
             <field name="arch" type="xml">
                 <tree string="Libraries" >
                     <field name="name" />
+                    <field name="schemas" />
                 </tree>
             </field>
         </record>
@@ -124,7 +122,7 @@
                 <form string="Library">
                     <group>
                         <field name="name" />
-                        <field name="data_types" />
+                        <field name="schemas" />
                     </group>
                 </form>
             </field>
