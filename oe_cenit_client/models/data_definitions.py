@@ -26,7 +26,7 @@ import logging
 import simplejson
 
 from openerp import models, fields, api
-from openerp.addons.oe_cenit_client import cenit_api  # @UnresolvedImport
+from openerp.addons.oe_cenit_client import cenit_api
 
 
 _logger = logging.getLogger(__name__)
@@ -87,7 +87,6 @@ class CenitSchema(cenit_api.CenitApi, models.Model):
                         'datatype_cenitID': v[0]['data_types'][0]['id'],
                     })
 
-
         return update
 
 
@@ -105,12 +104,6 @@ class CenitLibrary(cenit_api.CenitApi, models.Model):
         'library',
         string = 'Schemas'
     )
-
-    #~ data_types = fields.One2many(
-        #~ 'cenit.data_type',
-        #~ 'library',
-        #~ string = 'Data Types'
-    #~ )
 
     _sql_constraints = [
         ('name_uniq', 'UNIQUE(name)', 'The name must be unique!'),
